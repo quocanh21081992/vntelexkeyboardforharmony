@@ -48,6 +48,26 @@ export class KeyboardController {
   private textInputClient?: inputMethodEngine.TextInputClient;
   private pendingShow: boolean = false;
 
+  // --- Backspace hold-to-repeat ---
+  // - Xóa 1 ký tự ngay khi nhấn
+  // - Sau một khoảng delay ngắn, tự động xóa liên tục cho đến khi thả tay
+  private backspaceHolding: boolean = false;
+  private backspaceDelayTimerId: number = 0;
+  private backspaceRepeatTimerId: number = 0;
+
+  // Có thể chỉnh theo ý bạn
+  private readonly backspaceInitialDelayMs: number = 350;
+  private readonly backspaceRepeatIntervalMs: number = 55;
+
+  // ArkTSCheck: tránh dùng unknown/any khi làm việc với timer id
+  private setTimeoutId(handler: () => void, delayMs: number): number {
+    return setTimeout(handler, delayMs) as number;
+  }
+
+  private setIntervalId(handler: () => void, intervalMs: number): number {
+    return setInterval(handler, intervalMs) as number;
+  }
+
   onCreate(context: InputMethodExtensionContext): void {
     const ime: inputMethodEngine.InputMethodAbility = inputMethodEngine.getInputMethodAbility();
     if (!ime) return;
@@ -66,6 +86,7 @@ export class KeyboardController {
       });
 
     ime.on('inputStop', () => {
+      this.stopBackspaceRepeat();
       this.textInputClient = undefined;
       this.pendingShow = false;
       this.panel?.hide();
@@ -73,6 +94,7 @@ export class KeyboardController {
   }
 
   onDestroy(): void {
+    this.stopBackspaceRepeat();
     this.pendingShow = false;
     try {
       this.panel?.hide();
@@ -116,6 +138,59 @@ export class KeyboardController {
       await client.insertText(text);
     } catch {
       // ignore
+    }
+  }
+
+  /**
+   * Nhấn giữ Backspace để xóa liên tục.
+   * UI nên gọi startBackspaceRepeat() ở TouchType.Down,
+   * và stopBackspaceRepeat() ở TouchType.Up/Cancel.
+   */
+  startBackspaceRepeat(): void {
+    // tránh chạy timer nếu không có client
+    if (!this.textInputClient) return;
+    if (this.backspaceHolding) return;
+
+    this.backspaceHolding = true;
+    this.clearBackspaceTimers();
+
+    // Xóa 1 ký tự ngay khi nhấn
+    this.backspace();
+
+    // Sau delay thì bắt đầu lặp
+    this.backspaceDelayTimerId = this.setTimeoutId(() => {
+      if (!this.backspaceHolding) return;
+
+      this.backspaceRepeatTimerId = this.setIntervalId(() => {
+        if (!this.backspaceHolding) return;
+        this.backspace();
+      }, this.backspaceRepeatIntervalMs);
+
+    }, this.backspaceInitialDelayMs);
+  }
+
+  stopBackspaceRepeat(): void {
+    this.backspaceHolding = false;
+    this.clearBackspaceTimers();
+  }
+
+  private clearBackspaceTimers(): void {
+    if (this.backspaceDelayTimerId !== 0) {
+      try {
+        clearTimeout(this.backspaceDelayTimerId);
+      } catch {
+        // ignore
+      }
+      this.backspaceDelayTimerId = 0;
+    }
+
+    if (this.backspaceRepeatTimerId !== 0) {
+      try {
+        clearInterval(this.backspaceRepeatTimerId);
+      } catch {
+        // ignore
+      }
+      this.backspaceRepeatTimerId = 0;
     }
   }
 

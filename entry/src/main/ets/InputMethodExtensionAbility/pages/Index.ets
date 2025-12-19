@@ -68,10 +68,6 @@ struct Index {
       this.shiftOn = !this.shiftOn;
       return;
     }
-    if (k.kind === KeyKind.Backspace) {
-      keyboardController.backspace();
-      return;
-    }
     if (k.kind === KeyKind.Space) {
       keyboardController.space();
       return;
@@ -81,19 +77,26 @@ struct Index {
       return;
     }
 
-    // Char
     const out: string = this.shiftOn ? k.value.toUpperCase() : k.value;
     keyboardController.commitText(out);
 
-    // tắt shift sau 1 ký tự (hành vi phổ biến)
     if (this.shiftOn) this.shiftOn = false;
   }
 
   private handleTouch(k: KeyData, e: TouchEvent): void {
     if (e.type === TouchType.Down) {
       this.pressedKeyId = k.id;
+
+      // Giữ Backspace để xóa liên tục
+      if (k.kind === KeyKind.Backspace) {
+        keyboardController.startBackspaceRepeat();
+      }
     } else if (e.type === TouchType.Up || e.type === TouchType.Cancel) {
       this.pressedKeyId = '';
+
+      if (k.kind === KeyKind.Backspace) {
+        keyboardController.stopBackspaceRepeat();
+      }
     }
   }
 
@@ -131,8 +134,12 @@ struct Index {
       this.handleTouch(k, e);
     })
     .onClick(() => {
-      this.onKey(k);
-      this.pressedKeyId = '';
+      // Backspace đã xử lý bằng onTouch (Down/Up) để hỗ trợ giữ-xóa-liên-tục,
+      // tránh bị xóa 2 lần khi tap.
+      if (k.kind !== KeyKind.Backspace) {
+        this.onKey(k);
+        this.pressedKeyId = '';
+      }
     })
     .layoutWeight(k.weight);
   }
