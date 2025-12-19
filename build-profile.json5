@@ -1,0 +1,56 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\HUAWEI\\.ohos\\config\\default_VnTelexKeyboard_mEJb6ScDnzFu9yXFu-BA42dVxihuV_1MiB1q-1oh7Nc=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001BC0052E8A7C8CABBAEB6C10CE1F41603ABACBF887D5B8554E25D0A01D00F691AEADAA655BF8998C",
+          "profile": "C:\\Users\\HUAWEI\\.ohos\\config\\default_VnTelexKeyboard_mEJb6ScDnzFu9yXFu-BA42dVxihuV_1MiB1q-1oh7Nc=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\HUAWEI\\.ohos\\config\\default_VnTelexKeyboard_mEJb6ScDnzFu9yXFu-BA42dVxihuV_1MiB1q-1oh7Nc=.p12",
+          "storePassword": "0000001BB0EB71DCE9DE14143680FF5DD0A2C6FECD6949D07CC6AA8F2F28FD530AC3AEDBA619EA2EC9BDD7"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "targetSdkVersion": "6.0.1(21)",
+        "compatibleSdkVersion": "6.0.1(21)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug",
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}
