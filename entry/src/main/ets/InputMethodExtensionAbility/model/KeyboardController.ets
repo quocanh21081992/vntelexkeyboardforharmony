@@ -123,9 +123,9 @@ export class KeyboardController {
     const client: inputMethodEngine.TextInputClient | undefined = this.textInputClient;
     if (!client) return;
 
-    // Backspace = xóa ký tự trước con trỏ
+    // Backspace = xóa ký tự trước con trỏ (deleteForward)
     try {
-      await client.deleteBackward(1);
+      await client.deleteForward(1);
     } catch {
       // ignore
     }
