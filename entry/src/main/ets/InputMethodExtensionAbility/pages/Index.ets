@@ -19,28 +19,21 @@ class KbStyle {
   keyBgFn: string = '#2A2A2C';
   keyBgFnPressed: string = '#3A3A3C';
 
-  textColor: string = '#EDEDED';
   textSize: number = 18;
+  textColor: string = '#FFFFFF';
 
-  spaceHint: string = '#B9B100';
-  spaceHintAlpha: number = 0.55;
+  // space hint
+  spaceHint: string = '#FFFFFF';
+  spaceHintAlpha: number = 0.18;
 
-  // Preview bar
-  previewBg: string = '#1F1F1F';
-  previewTextColor: string = '#EDEDED';
-  previewHintColor: string = '#9A9A9A';
-  previewH: number = 24;
-  previewRadius: number = 6;
-
-  // Popup bubble (key preview)
-  popupBg: string = '#3A3A3C';
-  popupText: string = '#FFFFFF';
-  popupRadius: number = 6;
-  popupFont: number = 18;
-
-  popupW: number = 44;
+  // popup preview
+  popupW: number = 36;
   popupH: number = 44;
   popupGap: number = 6;
+  popupRadius: number = 10;
+  popupBg: string = '#3A3A3C';
+  popupText: string = '#FFFFFF';
+  popupFont: number = 22;
 }
 
 class KeyArea {
@@ -55,67 +48,46 @@ class KeyArea {
 struct Index {
   private s: KbStyle = new KbStyle();
 
-  @State private shiftOn: boolean = false;
+  @State private previewText: string = '';
+
+  private shiftOn: boolean = false;
+
+  // pressed
   @State private pressedKeyId: string = '';
 
-  @State private previewText: string = '';
-  private previewTimerId: number = 0;
-
-  // ===== popup overlay state =====
+  // popup
   @State private popupVisible: boolean = false;
   @State private popupLabel: string = '';
   @State private popupX: number = 0;
   @State private popupY: number = 0;
 
+  // global root pos for popup coordinate conversion
   private rootGX: number = 0;
   private rootGY: number = 0;
 
-  private keyAreas: Map<string, KeyArea> = new Map<string, KeyArea>();
+  // cache key areas for popup positioning
+  private keyAreas: Map<string, KeyArea> = new Map();
 
-  // ✅ FIX: nhận Length | undefined
-  private lenToNumber(v?: Length): number {
-    if (v === undefined || v === null) return 0;
-
-    if (typeof v === 'number') return v;
-
-    if (typeof v === 'string') {
-      const n: number = parseFloat(v);
-      return isNaN(n) ? 0 : n;
-    }
-
-    // Resource… fallback
-    return 0;
+  aboutToAppear() {
+    this.previewText = keyboardController.getPreviewText();
   }
 
   private syncPreview(): void {
-    const t: string = keyboardController.getPreviewText();
-    if (t !== this.previewText) this.previewText = t;
-  }
-
-  aboutToAppear(): void {
-    this.previewTimerId = setInterval(() => this.syncPreview(), 80) as number;
-    this.syncPreview();
-  }
-
-  aboutToDisappear(): void {
-    if (this.previewTimerId !== 0) {
-      try { clearInterval(this.previewTimerId); } catch { /* ignore */ }
-      this.previewTimerId = 0;
-    }
-  }
-
-  private rowIndent(rowIdx: number): number {
-    if (rowIdx === 2) return 14;
-    if (rowIdx === 3) return 6;
-    return 0;
+    this.previewText = keyboardController.getPreviewText();
   }
 
   private isFn(k: KeyData): boolean {
-    return k.kind !== KeyKind.Char;
+    return k.kind !== KeyKind.Char && k.kind !== KeyKind.Space;
+  }
+
+  private bgColorOf(k: KeyData): string {
+    const pressed: boolean = this.pressedKeyId === k.id;
+    if (this.isFn(k)) return pressed ? this.s.keyBgFnPressed : this.s.keyBgFn;
+    return pressed ? this.s.keyBgPressed : this.s.keyBg;
   }
 
   private canShowPopup(k: KeyData): boolean {
-    // ✅ chỉ popup cho chữ/số/ký tự đặc biệt
+    // chỉ popup cho chữ / số / ký tự đặc biệt
     return k.kind === KeyKind.Char;
   }
 
@@ -124,15 +96,9 @@ struct Index {
     if (k.kind === KeyKind.Shift) return '⇧';
     if (k.kind === KeyKind.Backspace) return '⌫';
     if (k.kind === KeyKind.Enter) return '⏎';
-    if (k.kind === KeyKind.Space) return '␠';
     if (k.kind === KeyKind.Num123) return '123';
+    if (k.kind === KeyKind.Space) return '';
     return k.label;
-  }
-
-  private bgColorOf(k: KeyData): string {
-    const pressed: boolean = (this.pressedKeyId === k.id);
-    if (this.isFn(k)) return pressed ? this.s.keyBgFnPressed : this.s.keyBgFn;
-    return pressed ? this.s.keyBgPressed : this.s.keyBg;
   }
 
   private onKey(k: KeyData): void {
@@ -167,6 +133,15 @@ struct Index {
     if (this.shiftOn) this.shiftOn = false;
   }
 
+  private lenToNumber(v: Length | undefined): number {
+    if (v === undefined) return 0;
+    if (typeof v === 'number') return v;
+
+    const s: string = v.toString();
+    const m = /(-?\d+(\.\d+)?)/.exec(s);
+    return m ? Number(m[1]) : 0;
+  }
+
   private showPopupForKey(k: KeyData): void {
     if (!this.canShowPopup(k)) return;
 
@@ -195,7 +170,10 @@ struct Index {
 
       this.showPopupForKey(k);
 
-      if (k.kind === KeyKind.Backspace) {
+      // ✅ Commit ngay ở DOWN (trừ Backspace) để tránh ClickRecognizer bị reject
+      if (k.kind !== KeyKind.Backspace) {
+        this.onKey(k);
+      } else {
         keyboardController.startBackspaceRepeat();
       }
     } else if (e.type === TouchType.Up || e.type === TouchType.Cancel) {
@@ -256,7 +234,6 @@ struct Index {
     .borderRadius(this.s.radius)
     .backgroundColor(this.bgColorOf(k))
     .layoutWeight(k.weight)
-    // ✅ FIX: dùng optional chaining => Length | undefined
     .onAreaChange((_: Area, area: Area) => {
       const a: KeyArea = new KeyArea();
       a.gx = this.lenToNumber(area.globalPosition?.x);
@@ -265,10 +242,7 @@ struct Index {
       a.h = this.lenToNumber(area.height);
       this.keyAreas.set(k.id, a);
     })
-    .onTouch((e: TouchEvent) => this.handleTouch(k, e))
-    .onClick(() => {
-      if (k.kind !== KeyKind.Backspace) this.onKey(k);
-    });
+    .onTouch((e: TouchEvent) => this.handleTouch(k, e));
   }
 
   @Builder
@@ -277,50 +251,48 @@ struct Index {
       if (this.previewText.length > 0) {
         Text(this.previewText)
           .fontSize(15)
-          .fontColor(this.s.previewTextColor)
+          .fontColor('#FFFFFF')
+          .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+          .borderRadius(10)
+          .backgroundColor('#1F1F1F')
           .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .padding({ left: 10, right: 10 });
+          .textOverflow({ overflow: TextOverflow.Ellipsis });
       } else {
-        Text('Bảng gõ tạm')
-          .fontSize(12)
-          .fontColor(this.s.previewHintColor)
-          .padding({ left: 10, right: 10 });
+        // ✅ FIX: Blank chỉ được dùng trong Row/Column/Flex
+        Row() { Blank().height(32) }.width('100%');
       }
     }
-    .height(this.s.previewH)
     .width('100%')
-    .borderRadius(this.s.previewRadius)
-    .backgroundColor(this.s.previewBg)
-    .margin({ bottom: this.s.gapY });
+    .padding({ left: this.s.padding, right: this.s.padding, top: 6, bottom: 6 });
+  }
+
+  @Builder
+  private KeyboardBody() {
+    Column() {
+      ForEach(KEYBOARD_ROWS, (row: Array<KeyData>, ri: number) => {
+        Row() {
+          ForEach(row, (k: KeyData) => {
+            this.KeyView(k);
+          }, (k: KeyData) => k.id);
+        }
+        .width('100%')
+        .height(this.s.keyH)
+        .margin({ top: ri === 0 ? 0 : this.s.gapY });
+      }, (_row: Array<KeyData>, i: number) => String(i));
+    }
+    .width('100%')
+    .padding({ left: this.s.padding, right: this.s.padding });
   }
 
   build() {
     Stack() {
       Column() {
         this.PreviewBar();
-
-        ForEach(KEYBOARD_ROWS, (row: Array<KeyData>, rowIdx: number) => {
-          Row() {
-            ForEach(row, (k: KeyData) => {
-              this.KeyView(k);
-            }, (k: KeyData) => k.id);
-          }
-          .width('100%')
-          .justifyContent(FlexAlign.SpaceBetween)
-          .padding({ left: this.rowIndent(rowIdx), right: this.rowIndent(rowIdx) })
-          .margin({ top: rowIdx === 0 ? 0 : this.s.gapY });
-        }, (_row: Array<KeyData>, idx: number) => String(idx));
+        this.KeyboardBody();
+        Blank().height(this.s.safeBottom);
       }
       .width('100%')
-      .height('100%')
-      .backgroundColor(this.s.bg)
-      .padding({
-        left: this.s.padding,
-        right: this.s.padding,
-        top: this.s.padding,
-        bottom: this.s.padding + this.s.safeBottom
-      });
+      .backgroundColor(this.s.bg);
 
       if (this.popupVisible) {
         this.PopupBubble();
