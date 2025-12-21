@@ -77,7 +77,8 @@ struct Index {
   }
 
   private isFn(k: KeyData): boolean {
-    return k.kind !== KeyKind.Char && k.kind !== KeyKind.Space;
+    // ✅ Spacer không phải phím chức năng
+    return k.kind !== KeyKind.Char && k.kind !== KeyKind.Space && k.kind !== KeyKind.Spacer;
   }
 
   private bgColorOf(k: KeyData): string {
@@ -92,6 +93,7 @@ struct Index {
   }
 
   private labelOf(k: KeyData): string {
+    if (k.kind === KeyKind.Spacer) return '';
     if (k.kind === KeyKind.Char) return this.shiftOn ? k.label.toUpperCase() : k.label;
     if (k.kind === KeyKind.Shift) return '⇧';
     if (k.kind === KeyKind.Backspace) return '⌫';
@@ -102,6 +104,8 @@ struct Index {
   }
 
   private onKey(k: KeyData): void {
+    if (k.kind === KeyKind.Spacer) return;
+
     if (k.kind === KeyKind.Shift) {
       this.shiftOn = !this.shiftOn;
       return;
@@ -165,6 +169,8 @@ struct Index {
   }
 
   private handleTouch(k: KeyData, e: TouchEvent): void {
+    if (k.kind === KeyKind.Spacer) return;
+
     if (e.type === TouchType.Down) {
       this.pressedKeyId = k.id;
 
@@ -206,43 +212,51 @@ struct Index {
 
   @Builder
   private KeyView(k: KeyData) {
-    Stack() {
-      if (k.kind === KeyKind.Space) {
-        Row() {
-          Blank();
-          Stack()
-            .height(4)
-            .width('55%')
-            .borderRadius(999)
-            .backgroundColor(this.s.spaceHint)
-            .opacity(this.s.spaceHintAlpha);
-          Blank();
+    // ✅ KHÔNG dùng `return` trong Builder. Dùng if/else thuần UI.
+    if (k.kind === KeyKind.Spacer) {
+      Blank()
+        .height(this.s.keyH)
+        .margin({ left: this.s.gapX / 2, right: this.s.gapX / 2 })
+        .layoutWeight(k.weight);
+    } else {
+      Stack() {
+        if (k.kind === KeyKind.Space) {
+          Row() {
+            Blank();
+            Stack()
+              .height(4)
+              .width('55%')
+              .borderRadius(999)
+              .backgroundColor(this.s.spaceHint)
+              .opacity(this.s.spaceHintAlpha);
+            Blank();
+          }
+          .width('100%')
+          .height('100%')
+          .alignItems(VerticalAlign.Center)
+          .justifyContent(FlexAlign.Center);
+        } else {
+          Text(this.labelOf(k))
+            .fontSize(this.s.textSize)
+            .fontColor(this.s.textColor)
+            .fontWeight(this.isFn(k) ? FontWeight.Medium : FontWeight.Regular);
         }
-        .width('100%')
-        .height('100%')
-        .alignItems(VerticalAlign.Center)
-        .justifyContent(FlexAlign.Center);
-      } else {
-        Text(this.labelOf(k))
-          .fontSize(this.s.textSize)
-          .fontColor(this.s.textColor)
-          .fontWeight(this.isFn(k) ? FontWeight.Medium : FontWeight.Regular);
       }
+      .height(this.s.keyH)
+      .margin({ left: this.s.gapX / 2, right: this.s.gapX / 2 })
+      .borderRadius(this.s.radius)
+      .backgroundColor(this.bgColorOf(k))
+      .layoutWeight(k.weight)
+      .onAreaChange((_: Area, area: Area) => {
+        const a: KeyArea = new KeyArea();
+        a.gx = this.lenToNumber(area.globalPosition?.x);
+        a.gy = this.lenToNumber(area.globalPosition?.y);
+        a.w = this.lenToNumber(area.width);
+        a.h = this.lenToNumber(area.height);
+        this.keyAreas.set(k.id, a);
+      })
+      .onTouch((e: TouchEvent) => this.handleTouch(k, e));
     }
-    .height(this.s.keyH)
-    .margin({ left: this.s.gapX / 2, right: this.s.gapX / 2 })
-    .borderRadius(this.s.radius)
-    .backgroundColor(this.bgColorOf(k))
-    .layoutWeight(k.weight)
-    .onAreaChange((_: Area, area: Area) => {
-      const a: KeyArea = new KeyArea();
-      a.gx = this.lenToNumber(area.globalPosition?.x);
-      a.gy = this.lenToNumber(area.globalPosition?.y);
-      a.w = this.lenToNumber(area.width);
-      a.h = this.lenToNumber(area.height);
-      this.keyAreas.set(k.id, a);
-    })
-    .onTouch((e: TouchEvent) => this.handleTouch(k, e));
   }
 
   @Builder

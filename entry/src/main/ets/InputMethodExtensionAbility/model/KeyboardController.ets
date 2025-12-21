@@ -7,7 +7,7 @@ import { TelexEngine, TelexActionKind } from './TelexEngine';
 const UI_PAGE: string = 'InputMethodExtensionAbility/pages/Index';
 
 // ---- Height tuning (vp) ----
-const KEYBOARD_CONTENT_HEIGHT_VP: number = 292;
+const KEYBOARD_CONTENT_HEIGHT_VP: number = 310;
 const KEYBOARD_SAFE_BOTTOM_VP: number = 12;
 const KEYBOARD_TOTAL_HEIGHT_VP: number = KEYBOARD_CONTENT_HEIGHT_VP + KEYBOARD_SAFE_BOTTOM_VP;
 
