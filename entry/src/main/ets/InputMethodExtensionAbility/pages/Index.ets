@@ -5,16 +5,12 @@ import { KEYBOARD_ROWS, KeyData, KeyKind } from './KeyboardKeyData';
 class KbStyle {
   bg: string = '#242424';
 
-  // Tăng nhẹ padding để layout giống bàn phím hệ thống hơn
   padding: number = 2;
-
-  // GIỮ NGUYÊN: thanh pad dưới
   safeBottom: number = 12;
 
-  // Phím + khoảng cách giống bàn phím bên phải hơn
   keyH: number = 44;
-  gapX: number = 5; // ngang giữa phím
-  gapY: number = 8; // dọc giữa các row
+  gapX: number = 5;
+  gapY: number = 8;
   radius: number = 6;
 
   keyBg: string = '#2C2C2E';
@@ -29,12 +25,29 @@ class KbStyle {
   spaceHint: string = '#B9B100';
   spaceHintAlpha: number = 0.55;
 
-  // Preview bar: giữ nhưng không làm nhỏ key nữa
+  // Preview bar
   previewBg: string = '#1F1F1F';
   previewTextColor: string = '#EDEDED';
   previewHintColor: string = '#9A9A9A';
   previewH: number = 24;
   previewRadius: number = 6;
+
+  // Popup bubble (key preview)
+  popupBg: string = '#3A3A3C';
+  popupText: string = '#FFFFFF';
+  popupRadius: number = 6;
+  popupFont: number = 18;
+
+  popupW: number = 44;
+  popupH: number = 44;
+  popupGap: number = 6;
+}
+
+class KeyArea {
+  gx: number = 0;
+  gy: number = 0;
+  w: number = 0;
+  h: number = 0;
 }
 
 @Entry
@@ -48,18 +61,39 @@ struct Index {
   @State private previewText: string = '';
   private previewTimerId: number = 0;
 
+  // ===== popup overlay state =====
+  @State private popupVisible: boolean = false;
+  @State private popupLabel: string = '';
+  @State private popupX: number = 0;
+  @State private popupY: number = 0;
+
+  private rootGX: number = 0;
+  private rootGY: number = 0;
+
+  private keyAreas: Map<string, KeyArea> = new Map<string, KeyArea>();
+
+  // ✅ FIX: nhận Length | undefined
+  private lenToNumber(v?: Length): number {
+    if (v === undefined || v === null) return 0;
+
+    if (typeof v === 'number') return v;
+
+    if (typeof v === 'string') {
+      const n: number = parseFloat(v);
+      return isNaN(n) ? 0 : n;
+    }
+
+    // Resource… fallback
+    return 0;
+  }
+
   private syncPreview(): void {
     const t: string = keyboardController.getPreviewText();
-    if (t !== this.previewText) {
-      this.previewText = t;
-    }
+    if (t !== this.previewText) this.previewText = t;
   }
 
   aboutToAppear(): void {
-    this.previewTimerId = setInterval(() => {
-      this.syncPreview();
-    }, 80) as number;
-
+    this.previewTimerId = setInterval(() => this.syncPreview(), 80) as number;
     this.syncPreview();
   }
 
@@ -71,8 +105,8 @@ struct Index {
   }
 
   private rowIndent(rowIdx: number): number {
-    if (rowIdx === 1) return 14;
-    if (rowIdx === 2) return 6;
+    if (rowIdx === 2) return 14;
+    if (rowIdx === 3) return 6;
     return 0;
   }
 
@@ -80,21 +114,24 @@ struct Index {
     return k.kind !== KeyKind.Char;
   }
 
+  private canShowPopup(k: KeyData): boolean {
+    // ✅ chỉ popup cho chữ/số/ký tự đặc biệt
+    return k.kind === KeyKind.Char;
+  }
+
   private labelOf(k: KeyData): string {
     if (k.kind === KeyKind.Char) return this.shiftOn ? k.label.toUpperCase() : k.label;
     if (k.kind === KeyKind.Shift) return '⇧';
     if (k.kind === KeyKind.Backspace) return '⌫';
     if (k.kind === KeyKind.Enter) return '⏎';
-    if (k.kind === KeyKind.Space) return '';
+    if (k.kind === KeyKind.Space) return '␠';
     if (k.kind === KeyKind.Num123) return '123';
     return k.label;
   }
 
   private bgColorOf(k: KeyData): string {
     const pressed: boolean = (this.pressedKeyId === k.id);
-    if (this.isFn(k)) {
-      return pressed ? this.s.keyBgFnPressed : this.s.keyBgFn;
-    }
+    if (this.isFn(k)) return pressed ? this.s.keyBgFnPressed : this.s.keyBgFn;
     return pressed ? this.s.keyBgPressed : this.s.keyBg;
   }
 
@@ -104,9 +141,8 @@ struct Index {
       return;
     }
 
-    // Placeholder: lần sau làm layout số
     if (k.kind === KeyKind.Num123) {
-      // TODO: switch to numeric layout
+      // TODO: layout số sau
       return;
     }
 
@@ -128,25 +164,66 @@ struct Index {
     keyboardController.commitText(out);
 
     this.syncPreview();
-
     if (this.shiftOn) this.shiftOn = false;
+  }
+
+  private showPopupForKey(k: KeyData): void {
+    if (!this.canShowPopup(k)) return;
+
+    const area: KeyArea | undefined = this.keyAreas.get(k.id);
+    if (!area) return;
+
+    const localX: number = area.gx - this.rootGX;
+    const localY: number = area.gy - this.rootGY;
+
+    const bubbleLeft: number = (localX + area.w / 2) - (this.s.popupW / 2);
+    const bubbleTop: number = localY - this.s.popupH - this.s.popupGap;
+
+    this.popupLabel = this.labelOf(k);
+    this.popupX = bubbleLeft;
+    this.popupY = bubbleTop;
+    this.popupVisible = true;
+  }
+
+  private hidePopup(): void {
+    this.popupVisible = false;
   }
 
   private handleTouch(k: KeyData, e: TouchEvent): void {
     if (e.type === TouchType.Down) {
       this.pressedKeyId = k.id;
 
+      this.showPopupForKey(k);
+
       if (k.kind === KeyKind.Backspace) {
         keyboardController.startBackspaceRepeat();
       }
     } else if (e.type === TouchType.Up || e.type === TouchType.Cancel) {
-      this.pressedKeyId = '';
-
       if (k.kind === KeyKind.Backspace) {
         keyboardController.stopBackspaceRepeat();
         this.syncPreview();
       }
+      this.pressedKeyId = '';
+      this.hidePopup();
     }
+  }
+
+  @Builder
+  private PopupBubble() {
+    Column() {
+      Text(this.popupLabel)
+        .fontSize(this.s.popupFont)
+        .fontColor(this.s.popupText)
+        .fontWeight(FontWeight.Medium);
+    }
+    .width(this.s.popupW)
+    .height(this.s.popupH)
+    .borderRadius(this.s.popupRadius)
+    .backgroundColor(this.s.popupBg)
+    .justifyContent(FlexAlign.Center)
+    .alignItems(HorizontalAlign.Center)
+    .position({ x: this.popupX, y: this.popupY })
+    .enabled(false);
   }
 
   @Builder
@@ -154,14 +231,14 @@ struct Index {
     Stack() {
       if (k.kind === KeyKind.Space) {
         Row() {
-          Blank()
+          Blank();
           Stack()
             .height(4)
             .width('55%')
             .borderRadius(999)
             .backgroundColor(this.s.spaceHint)
             .opacity(this.s.spaceHintAlpha);
-          Blank()
+          Blank();
         }
         .width('100%')
         .height('100%')
@@ -178,16 +255,20 @@ struct Index {
     .margin({ left: this.s.gapX / 2, right: this.s.gapX / 2 })
     .borderRadius(this.s.radius)
     .backgroundColor(this.bgColorOf(k))
-    .onTouch((e: TouchEvent) => {
-      this.handleTouch(k, e);
+    .layoutWeight(k.weight)
+    // ✅ FIX: dùng optional chaining => Length | undefined
+    .onAreaChange((_: Area, area: Area) => {
+      const a: KeyArea = new KeyArea();
+      a.gx = this.lenToNumber(area.globalPosition?.x);
+      a.gy = this.lenToNumber(area.globalPosition?.y);
+      a.w = this.lenToNumber(area.width);
+      a.h = this.lenToNumber(area.height);
+      this.keyAreas.set(k.id, a);
     })
+    .onTouch((e: TouchEvent) => this.handleTouch(k, e))
     .onClick(() => {
-      if (k.kind !== KeyKind.Backspace) {
-        this.onKey(k);
-        this.pressedKeyId = '';
-      }
-    })
-    .layoutWeight(k.weight);
+      if (k.kind !== KeyKind.Backspace) this.onKey(k);
+    });
   }
 
   @Builder
@@ -215,31 +296,41 @@ struct Index {
   }
 
   build() {
-    Column() {
-      this.PreviewBar();
+    Stack() {
+      Column() {
+        this.PreviewBar();
 
-      ForEach(KEYBOARD_ROWS, (row: Array<KeyData>, rowIdx: number) => {
-        Row() {
-          ForEach(row, (k: KeyData) => {
-            this.KeyView(k);
-          }, (k: KeyData) => k.id);
-        }
-        .width('100%')
-        .justifyContent(FlexAlign.SpaceBetween)
-        .padding({ left: this.rowIndent(rowIdx), right: this.rowIndent(rowIdx) })
-        // đồng đều khoảng cách hàng, hàng đầu tiên không cần +1 nữa
-        .margin({ top: rowIdx === 0 ? 0 : this.s.gapY });
-      }, (_row: Array<KeyData>, idx: number) => String(idx));
+        ForEach(KEYBOARD_ROWS, (row: Array<KeyData>, rowIdx: number) => {
+          Row() {
+            ForEach(row, (k: KeyData) => {
+              this.KeyView(k);
+            }, (k: KeyData) => k.id);
+          }
+          .width('100%')
+          .justifyContent(FlexAlign.SpaceBetween)
+          .padding({ left: this.rowIndent(rowIdx), right: this.rowIndent(rowIdx) })
+          .margin({ top: rowIdx === 0 ? 0 : this.s.gapY });
+        }, (_row: Array<KeyData>, idx: number) => String(idx));
+      }
+      .width('100%')
+      .height('100%')
+      .backgroundColor(this.s.bg)
+      .padding({
+        left: this.s.padding,
+        right: this.s.padding,
+        top: this.s.padding,
+        bottom: this.s.padding + this.s.safeBottom
+      });
+
+      if (this.popupVisible) {
+        this.PopupBubble();
+      }
     }
+    .onAreaChange((_: Area, area: Area) => {
+      this.rootGX = this.lenToNumber(area.globalPosition?.x);
+      this.rootGY = this.lenToNumber(area.globalPosition?.y);
+    })
     .width('100%')
-    .height('100%')
-    .backgroundColor(this.s.bg)
-    .padding({
-      left: this.s.padding,
-      right: this.s.padding,
-      top: this.s.padding,
-      // GIỮ NGUYÊN: pad dưới
-      bottom: this.s.padding + this.s.safeBottom
-    });
+    .height('100%');
   }
 }

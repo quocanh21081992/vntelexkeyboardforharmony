@@ -7,7 +7,7 @@ import { TelexEngine, TelexActionKind } from './TelexEngine';
 const UI_PAGE: string = 'InputMethodExtensionAbility/pages/Index';
 
 // ---- Height tuning (vp) ----
-const KEYBOARD_CONTENT_HEIGHT_VP: number = 240;
+const KEYBOARD_CONTENT_HEIGHT_VP: number = 292;
 const KEYBOARD_SAFE_BOTTOM_VP: number = 12;
 const KEYBOARD_TOTAL_HEIGHT_VP: number = KEYBOARD_CONTENT_HEIGHT_VP + KEYBOARD_SAFE_BOTTOM_VP;
 
@@ -57,12 +57,22 @@ export class KeyboardController {
   private readonly backspaceInitialDelayMs: number = 350;
   private readonly backspaceRepeatIntervalMs: number = 55;
 
+  // ✅ FIX WARN: Function may throw exceptions
   private setTimeoutId(handler: () => void, delayMs: number): number {
-    return setTimeout(handler, delayMs) as number;
+    try {
+      return setTimeout(handler, delayMs) as number;
+    } catch {
+      return 0;
+    }
   }
 
+  // ✅ FIX WARN: Function may throw exceptions
   private setIntervalId(handler: () => void, intervalMs: number): number {
-    return setInterval(handler, intervalMs) as number;
+    try {
+      return setInterval(handler, intervalMs) as number;
+    } catch {
+      return 0;
+    }
   }
 
   // ===== UI Preview API =====
@@ -196,7 +206,6 @@ export class KeyboardController {
   private async performEnterAction(): Promise<void> {
     const client: inputMethodEngine.TextInputClient | undefined = this.textInputClient;
     if (!client) {
-      // không có client thì chỉ clear buffer để preview không kẹt
       this.resetComposing();
       return;
     }
@@ -367,7 +376,6 @@ export class KeyboardController {
   }
 
   async enter(): Promise<void> {
-    // ✅ FIX: không commit '\n' cứng nữa
     await this.performEnterAction();
   }
 
@@ -375,3 +383,6 @@ export class KeyboardController {
     await this.commitText(' ');
   }
 }
+
+const keyboardController = new KeyboardController();
+export default keyboardController;
