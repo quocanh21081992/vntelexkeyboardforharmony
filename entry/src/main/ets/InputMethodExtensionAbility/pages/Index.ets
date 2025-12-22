@@ -1,6 +1,6 @@
 // entry/src/main/ets/InputMethodExtensionAbility/pages/Index.ets
 import keyboardController from '../model/KeyboardControllerSingleton';
-import { KEYBOARD_ROWS_MAIN, KEYBOARD_ROWS_CAPS, KEYBOARD_ROWS_123, KeyData, KeyKind } from './KeyboardKeyData';
+import { KEYBOARD_ROWS_MAIN, KEYBOARD_ROWS_CAPS, KEYBOARD_ROWS_123, KEYBOARD_ROWS_123_MORE, KeyData, KeyKind } from './KeyboardKeyData';
 
 class KbStyle {
   bg: string = '#242424';
@@ -16,8 +16,9 @@ class KbStyle {
   keyBg: string = '#2C2C2E';
   keyBgPressed: string = '#3A3A3C';
 
-  keyBgFn: string = '#2A2A2C';
-  keyBgFnPressed: string = '#3A3A3C';
+  // function keys (shift/backspace/enter/123)
+  keyBgFn: string = '#1F1F1F';
+  keyBgFnPressed: string = '#2A2A2A';
 
   textSize: number = 18;
   textColor: string = '#FFFFFF';
@@ -49,11 +50,13 @@ struct Index {
   private s: KbStyle = new KbStyle();
 
   @State private previewText: string = '';
+
   // ✅ Shift behavior:
   // - shiftOnce: tap Shift once => uppercase for next letter only
   // - capsOn: double-tap Shift => CapsLock (persist)
   @State private capsOn: boolean = false;
   @State private shiftOnce: boolean = false;
+
   // ✅ Auto-cap: viết hoa chữ cái đầu tiên của câu / sau dấu kết câu
   @State private autoCapNext: boolean = true;
 
@@ -68,6 +71,14 @@ struct Index {
 
   // ✅ layout mode
   @State private isLayout123: boolean = false;
+  @State private isLayoutMore: boolean = false; // ✅ page 2 của layout 123 (bấm "=\<")
+
+  // root global offset for popup
+  private rootGX: number = 0;
+  private rootGY: number = 0;
+
+  // key position cache
+  private keyAreas: Map<string, KeyArea> = new Map();
 
   // double-tap Shift detection
   private lastShiftTapMs: number = 0;
@@ -75,23 +86,15 @@ struct Index {
 
   private sessionStartCb?: () => void;
 
-  // global root pos for popup coordinate conversion
-  private rootGX: number = 0;
-  private rootGY: number = 0;
-
-  // cache key areas for popup positioning
-  private keyAreas: Map<string, KeyArea> = new Map();
-
   aboutToAppear() {
-    if (!this.sessionStartCb) {
-      this.sessionStartCb = () => {
-        this.resetUiState();
-      };
-      keyboardController.addSessionStartListener(this.sessionStartCb);
-    }
+    this.sessionStartCb = () => {
+      this.resetUiState();
+      this.syncPreview();
+    };
+    keyboardController.addSessionStartListener(this.sessionStartCb);
 
-    // ✅ lần đầu render cũng reset luôn
     this.resetUiState();
+    this.syncPreview();
   }
 
   aboutToDisappear() {
@@ -104,6 +107,7 @@ struct Index {
   private resetUiState(): void {
     // ✅ luôn mở bàn phím ở layout ABC
     this.isLayout123 = false;
+    this.isLayoutMore = false;
 
     // ✅ reset Shift/Caps
     this.capsOn = false;
@@ -118,19 +122,11 @@ struct Index {
     this.hidePopup();
 
     // sync preview from controller (sau inputStart controller đã reset composing)
-    this.previewText = keyboardController.getPreviewText();
+    this.previewText = '';
   }
-
 
   private syncPreview(): void {
     this.previewText = keyboardController.getPreviewText();
-  }
-
-
-
-  private isLetterChar(ch: string): boolean {
-    // ArkTS: không dùng \p{L}, dùng so sánh upper/lower để nhận diện ký tự chữ (kể cả 'đ')
-    return ch.length === 1 && (ch.toLowerCase() !== ch.toUpperCase());
   }
 
   private isFn(k: KeyData): boolean {
@@ -153,8 +149,9 @@ struct Index {
     if (k.kind === KeyKind.Spacer) return '';
     if (k.kind === KeyKind.Char) return k.label;
     if (k.kind === KeyKind.Shift) {
-      // user chủ động bấm Shift => tắt auto-cap cho chữ cái kế tiếp (giống bàn phím phổ biến)
-      this.autoCapNext = false;
+      // ✅ layout 123: phím Shift dùng để vào trang 2 (=\<)
+      if (this.isLayout123) return k.label;
+
       if (this.capsOn) return '⇪';
       if (this.shiftOnce) return '⇧•';
       return '⇧';
@@ -167,12 +164,43 @@ struct Index {
     return k.label;
   }
 
+  private hidePopup(): void {
+    this.popupVisible = false;
+  }
+
+  private showPopupForKey(k: KeyData): void {
+    if (!this.canShowPopup(k)) return;
+
+    const area: KeyArea | undefined = this.keyAreas.get(k.id);
+    if (!area) return;
+
+    const localX: number = area.gx - this.rootGX;
+    const localY: number = area.gy - this.rootGY;
+
+    const bubbleLeft: number = (localX + area.w / 2) - (this.s.popupW / 2);
+    const bubbleTop: number = localY - this.s.popupH - this.s.popupGap;
+
+    this.popupLabel = this.labelOf(k);
+    this.popupX = bubbleLeft;
+    this.popupY = bubbleTop;
+    this.popupVisible = true;
+  }
+
   private onKey(k: KeyData): void {
     if (k.kind === KeyKind.Spacer) return;
 
     // ✅ chuyển layout
     if (k.kind === KeyKind.Num123) {
+      // ✅ đang ở trang 2 (more) thì quay về trang 1 của 123
+      if (this.isLayout123 && this.isLayoutMore) {
+        this.isLayoutMore = false;
+        this.hidePopup();
+        this.pressedKeyId = '';
+        return;
+      }
+
       this.isLayout123 = true;
+      this.isLayoutMore = false;
       this.capsOn = false;
       this.shiftOnce = false;
       this.lastShiftTapMs = 0;
@@ -180,8 +208,10 @@ struct Index {
       this.pressedKeyId = '';
       return;
     }
+
     if (k.kind === KeyKind.Abc) {
       this.isLayout123 = false;
+      this.isLayoutMore = false;
       this.capsOn = false;
       // nếu đang ở đầu câu (autoCapNext), bật shiftOnce để hiện layout chữ HOA
       this.shiftOnce = this.autoCapNext;
@@ -192,6 +222,14 @@ struct Index {
     }
 
     if (k.kind === KeyKind.Shift) {
+      // ✅ layout 123: phím "=\<" (Shift) => vào trang ký tự thứ 2
+      if (this.isLayout123) {
+        this.isLayoutMore = true;
+        this.hidePopup();
+        this.pressedKeyId = '';
+        return;
+      }
+
       // ✅ Shift 1 lần => viết hoa 1 chữ (shiftOnce)
       // ✅ Double-tap Shift => CapsLock (capsOn)
       if (!this.isLayout123) {
@@ -199,23 +237,18 @@ struct Index {
         const delta: number = now - this.lastShiftTapMs;
 
         if (delta <= this.SHIFT_DOUBLE_TAP_MS) {
-          // double-tap => toggle CapsLock
+          // double tap
           this.capsOn = !this.capsOn;
           this.shiftOnce = false;
           this.lastShiftTapMs = 0;
         } else {
           // single tap
-          if (this.capsOn) {
-            // nếu đang CapsLock, tap 1 cái để tắt
-            this.capsOn = false;
-            this.shiftOnce = false;
-          } else {
-            // bật/tắt shiftOnce
-            this.shiftOnce = !this.shiftOnce;
-          }
+          this.shiftOnce = !this.shiftOnce;
+          this.capsOn = false;
           this.lastShiftTapMs = now;
         }
       }
+
       this.hidePopup();
       this.pressedKeyId = '';
       return;
@@ -245,63 +278,43 @@ struct Index {
     // ✅ Auto-cap / ShiftOnce / CapsLock: áp dụng trực tiếp lên ký tự gửi xuống TelexEngine
     if (!this.isLayout123) {
       const needUpper: boolean = (this.capsOn || this.shiftOnce || this.autoCapNext);
-      if (needUpper && this.isLetterChar(out)) {
-        out = out.toUpperCase();
-      }
+      if (needUpper) out = out.toUpperCase();
+      else out = out.toLowerCase();
     }
 
-    keyboardController.commitText(out);
+    if (k.kind === KeyKind.Char) {
+      keyboardController.commitText(out);
 
-    // ✅ Dấu kết câu => chữ cái tiếp theo sẽ tự viết hoa
-    if (!this.isLayout123 && (k.value === '.' || k.value === '!' || k.value === '?')) {
-      this.autoCapNext = true;
-      if (!this.capsOn) {
-        this.shiftOnce = true; // hiển thị layout chữ HOA cho ký tự tiếp theo
+      // ✅ dấu kết câu => bật autoCapNext cho chữ sau
+      if (!this.isLayout123 && (k.value === '.' || k.value === '!' || k.value === '?')) {
+        this.autoCapNext = true;
+        if (!this.capsOn) this.shiftOnce = true;
       }
-    }
 
-    // ✅ Tắt shiftOnce sau khi gõ 1 chữ cái; đồng thời tắt autoCapNext sau chữ cái đầu tiên của câu
-    if (!this.isLayout123 && this.isLetterChar(k.value)) {
-      if (this.autoCapNext) {
-        this.autoCapNext = false;
-      }
+      // ✅ sau khi gõ ký tự chữ => tắt shiftOnce (nếu không caps)
       if (this.shiftOnce && !this.capsOn) {
         this.shiftOnce = false;
       }
+
+      this.syncPreview();
+      return;
     }
 
-    this.syncPreview();
+    if (k.kind === KeyKind.Backspace) {
+      keyboardController.backspace();
+      this.syncPreview();
+      return;
+    }
   }
 
   private lenToNumber(v: Length | undefined): number {
     if (v === undefined) return 0;
     if (typeof v === 'number') return v;
 
-    const s: string = v.toString();
-    const m = /(-?\d+(\.\d+)?)/.exec(s);
-    return m ? Number(m[1]) : 0;
-  }
-
-  private showPopupForKey(k: KeyData): void {
-    if (!this.canShowPopup(k)) return;
-
-    const area: KeyArea | undefined = this.keyAreas.get(k.id);
-    if (!area) return;
-
-    const localX: number = area.gx - this.rootGX;
-    const localY: number = area.gy - this.rootGY;
-
-    const bubbleLeft: number = (localX + area.w / 2) - (this.s.popupW / 2);
-    const bubbleTop: number = localY - this.s.popupH - this.s.popupGap;
-
-    this.popupLabel = this.labelOf(k);
-    this.popupX = bubbleLeft;
-    this.popupY = bubbleTop;
-    this.popupVisible = true;
-  }
-
-  private hidePopup(): void {
-    this.popupVisible = false;
+    const s: string = String(v);
+    const m = s.match(/-?\d+(\.\d+)?/);
+    if (m && m[0]) return Number(m[0]);
+    return 0;
   }
 
   private handleTouch(k: KeyData, e: TouchEvent): void {
@@ -309,10 +322,9 @@ struct Index {
 
     if (e.type === TouchType.Down) {
       this.pressedKeyId = k.id;
-
       this.showPopupForKey(k);
 
-      // commit ngay ở DOWN (trừ Backspace)
+      // commit ngay ở DOWN
       if (k.kind !== KeyKind.Backspace) {
         this.onKey(k);
       } else {
@@ -330,7 +342,7 @@ struct Index {
 
   @Builder
   private PopupBubble() {
-    Column() {
+    Stack() {
       Text(this.popupLabel)
         .fontSize(this.s.popupFont)
         .fontColor(this.s.popupText)
@@ -340,8 +352,6 @@ struct Index {
     .height(this.s.popupH)
     .borderRadius(this.s.popupRadius)
     .backgroundColor(this.s.popupBg)
-    .justifyContent(FlexAlign.Center)
-    .alignItems(HorizontalAlign.Center)
     .position({ x: this.popupX, y: this.popupY })
     .enabled(false);
   }
@@ -394,7 +404,6 @@ struct Index {
     }
   }
 
-
   private getAbcRows(): Array<Array<KeyData>> {
     return (this.capsOn || this.shiftOnce) ? KEYBOARD_ROWS_CAPS : KEYBOARD_ROWS_MAIN;
   }
@@ -402,7 +411,7 @@ struct Index {
   // ✅ ArkUI ForEach diffing: MAIN và CAPS dùng cùng id (q,w,e,...)
   // Nếu key không thay đổi theo mode, UI có thể tái sử dụng node cũ và không cập nhật label.
   private keyModePrefix(): string {
-    if (this.isLayout123) return '123';
+    if (this.isLayout123) return this.isLayoutMore ? '123m' : '123';
     return (this.capsOn || this.shiftOnce) ? 'caps' : 'main';
   }
 
@@ -430,21 +439,33 @@ struct Index {
     .justifyContent(FlexAlign.Center);
   }
 
-
   @Builder
   private KeyboardBody() {
     Column() {
       if (this.isLayout123) {
-        ForEach(KEYBOARD_ROWS_123, (row: Array<KeyData>, ri: number) => {
-          Row() {
-            ForEach(row, (k: KeyData) => {
-              this.KeyView(k);
-            }, (k: KeyData) => k.id);
-          }
-          .width('100%')
-          .height(this.s.keyH)
-          .margin({ top: ri === 0 ? 0 : this.s.gapY });
-        }, (_row: Array<KeyData>, i: number) => 's' + String(i));
+        if (this.isLayoutMore) {
+          ForEach(KEYBOARD_ROWS_123_MORE, (row: Array<KeyData>, ri: number) => {
+            Row() {
+              ForEach(row, (k: KeyData) => {
+                this.KeyView(k);
+              }, (k: KeyData) => k.id);
+            }
+            .width('100%')
+            .height(this.s.keyH)
+            .margin({ top: ri === 0 ? 0 : this.s.gapY });
+          }, (_row: Array<KeyData>, i: number) => 'sm' + String(i));
+        } else {
+          ForEach(KEYBOARD_ROWS_123, (row: Array<KeyData>, ri: number) => {
+            Row() {
+              ForEach(row, (k: KeyData) => {
+                this.KeyView(k);
+              }, (k: KeyData) => k.id);
+            }
+            .width('100%')
+            .height(this.s.keyH)
+            .margin({ top: ri === 0 ? 0 : this.s.gapY });
+          }, (_row: Array<KeyData>, i: number) => 's' + String(i));
+        }
       } else {
         ForEach(this.getAbcRows(), (row: Array<KeyData>, ri: number) => {
           Row() {
