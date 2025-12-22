@@ -418,7 +418,7 @@ struct Index {
           .backgroundColor('#1F1F1F')
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .offset({ x: 0, y: -4 }); // ✅ nắn lên cho khớp mốc popup "r"
+          .offset({ x: 0, y: 0 }); // ✅ nắn lên cho khớp mốc popup "r"
       } else {
         Blank();
       }
@@ -463,13 +463,14 @@ struct Index {
   }
 
   build() {
-    Stack() {
+    Stack({ alignContent: Alignment.TopStart }) {
       Column() {
         this.PreviewBar();
         this.KeyboardBody();
         Blank().height(this.s.safeBottom);
       }
       .width('100%')
+      .height('100%')
       .backgroundColor(this.s.bg);
 
       if (this.popupVisible) {
