@@ -186,7 +186,7 @@ export const KEYBOARD_ROWS_123: Array<Array<KeyData>> = [
 
   // row 2: punctuation + backspace
   [
-    k('symMore', KeyKind.Shift, '=\\<', '', 1),
+    k('symMore', KeyKind.Shift, '=\\<', '', 1.5),
     k('star', KeyKind.Char, '*', '*', 1),
     k('dquote', KeyKind.Char, '"', '"', 1),
     k('squote', KeyKind.Char, '\'', '\'', 1),
@@ -194,7 +194,7 @@ export const KEYBOARD_ROWS_123: Array<Array<KeyData>> = [
     k('semicolon', KeyKind.Char, ';', ';', 1),
     k('bang', KeyKind.Char, '!', '!', 1),
     k('qmark', KeyKind.Char, '?', '?', 1),
-    k('backspace2', KeyKind.Backspace, '⌫', '', 2)
+    k('backspace2', KeyKind.Backspace, '⌫', '', 1.5)
   ],
 
   // row 3: bottom
@@ -239,7 +239,7 @@ export const KEYBOARD_ROWS_123_MORE: Array<Array<KeyData>> = [
 
   // row 2
   [
-    k('num123_more', KeyKind.Num123, '123', '', 1),
+    k('num123_more', KeyKind.Num123, '123', '', 1.5),
     k('percent_more', KeyKind.Char, '%', '%', 1),
     k('copy', KeyKind.Char, '©', '©', 1),
     k('reg', KeyKind.Char, '®', '®', 1),
@@ -247,15 +247,15 @@ export const KEYBOARD_ROWS_123_MORE: Array<Array<KeyData>> = [
     k('check', KeyKind.Char, '✓', '✓', 1),
     k('lbrack', KeyKind.Char, '[', '[', 1),
     k('rbrack', KeyKind.Char, ']', ']', 1),
-    k('backspace_more', KeyKind.Backspace, '⌫', '', 2)
+    k('backspace_more', KeyKind.Backspace, '⌫', '', 1.5)
   ],
 
   // row 3: bottom
   [
     k('abc_more', KeyKind.Abc, 'ABC', '', 1.5),
-    k('comma_more', KeyKind.Char, ',', ',', 1.0),
+    k('comma_more', KeyKind.Char, '<', '<', 1.0),
     k('space_more', KeyKind.Space, '', ' ', 5.0),
-    k('dot_more', KeyKind.Char, '.', '.', 1.0),
+    k('dot_more', KeyKind.Char, '>', '>', 1.0),
     k('enter_more', KeyKind.Enter, '⏎', '\n', 1.5)
   ]
 ];
