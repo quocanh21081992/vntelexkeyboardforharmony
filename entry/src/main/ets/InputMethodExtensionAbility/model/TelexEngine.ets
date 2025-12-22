@@ -211,7 +211,9 @@ export class TelexEngine {
   }
 
   private getVowelInfo(ch: string): VowelInfo | undefined {
-    const c: string = ch;
+    // ✅ Hỗ trợ chữ HOA (A, Â, Á, ...): normalize để lookup,
+    // còn việc giữ hoa/thường sẽ do setTone/setGroupKeepTone quyết định.
+    const c: string = ch.toLowerCase();
 
     const make = (base: string, group: VowelGroup, tone: number): VowelInfo => {
       const v: VowelInfo = new VowelInfo();

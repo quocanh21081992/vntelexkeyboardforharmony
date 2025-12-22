@@ -367,6 +367,13 @@ struct Index {
     return (this.capsOn || this.shiftOnce) ? KEYBOARD_ROWS_CAPS : KEYBOARD_ROWS_MAIN;
   }
 
+  // ✅ ArkUI ForEach diffing: MAIN và CAPS dùng cùng id (q,w,e,...)
+  // Nếu key không thay đổi theo mode, UI có thể tái sử dụng node cũ và không cập nhật label.
+  private keyModePrefix(): string {
+    if (this.isLayout123) return '123';
+    return (this.capsOn || this.shiftOnce) ? 'caps' : 'main';
+  }
+
   @Builder
   private PreviewBar() {
     Row() {
@@ -411,12 +418,12 @@ struct Index {
           Row() {
             ForEach(row, (k: KeyData) => {
               this.KeyView(k);
-            }, (k: KeyData) => k.id);
+            }, (k: KeyData) => this.keyModePrefix() + '_' + k.id);
           }
           .width('100%')
           .height(this.s.keyH)
           .margin({ top: ri === 0 ? 0 : this.s.gapY });
-        }, (_row: Array<KeyData>, i: number) => 'm' + String(i));
+        }, (_row: Array<KeyData>, i: number) => this.keyModePrefix() + '_m' + String(i));
       }
     }
     .width('100%')
