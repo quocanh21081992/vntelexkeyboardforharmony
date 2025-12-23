@@ -3,7 +3,6 @@
     "pages/Index",
     "InputMethodExtensionAbility/pages/Index",
     "pages/Privacy",
-    "pages/About",
-    "pages/Copyright"
+    "pages/About"
   ]
 }
