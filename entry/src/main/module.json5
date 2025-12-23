@@ -39,8 +39,8 @@
         "srcEntry": "./ets/InputMethodExtensionAbility/InputMethodService.ets",
         "type": "inputMethod",
         "exported": true,
-        "description": "Telex Keyboard",
-        "icon": "$media:icon",
+        "description": "Vietnam Keyboard",
+        "icon": "$media:app_icon",
         "metadata": [
           {
             "name": "ohos.extension.input_method",

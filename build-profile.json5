@@ -7,11 +7,11 @@
         "material": {
           "certpath": "C:\\Users\\quoca\\.ohos\\config\\default_vntelexkeyboardforharmony_kR9nnPhyTEnzbQyXnafS6NKiwxeQEupqIRwFPQHzl0Y=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001B953D88F239136BB7D43B96888ABCF8B084409E212D3B057A97AA2729213B880D487BE133ADCD6C",
+          "keyPassword": "0000001B5BDD7313A16C891B4439AF3FB0A506C00F0C1CF26C397101462315432261AE2D15E4CAF3C5BE43",
           "profile": "C:\\Users\\quoca\\.ohos\\config\\default_vntelexkeyboardforharmony_kR9nnPhyTEnzbQyXnafS6NKiwxeQEupqIRwFPQHzl0Y=.p7b",
           "signAlg": "SHA256withECDSA",
           "storeFile": "C:\\Users\\quoca\\.ohos\\config\\default_vntelexkeyboardforharmony_kR9nnPhyTEnzbQyXnafS6NKiwxeQEupqIRwFPQHzl0Y=.p12",
-          "storePassword": "0000001B51B2DCDBD0EBAF5D085CD0DA465149766B47CB3DAFDECFA7B54FD2787024F6BA696C95191FFC81"
+          "storePassword": "0000001B870716C36B8B47E898CAA1F484B231400E699D18A3DAFE91FCD4034F319555DB5C1321EF2B92AB"
         }
       }
     ],

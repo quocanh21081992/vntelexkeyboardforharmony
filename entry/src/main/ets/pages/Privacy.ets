@@ -56,27 +56,8 @@ struct Privacy {
       Scroll() {
         Column({ space: 12 }) {
           this.Section(
-            '1) Dữ liệu chúng tôi thu thập',
-            '- Bàn phím có thể truy cập nội dung bạn gõ để thực hiện chức năng nhập liệu.\n' +
-              '- Ứng dụng không chủ động thu thập dữ liệu cá nhân định danh.\n' +
-              '- Nếu bạn bật tính năng tuỳ chọn, dữ liệu chỉ dùng để cải thiện trải nghiệm.'
-          )
-
-          this.Section(
-            '2) Cách chúng tôi sử dụng dữ liệu',
-            '- Hỗ trợ nhập tiếng Việt (Telex/VNI nếu có).\n' +
-              '- Vận hành các chức năng: chuyển layout, hiển thị giao diện.\n' +
-              '- Chẩn đoán lỗi khi bạn chủ động gửi phản hồi.'
-          )
-
-          this.Section(
-            '3) Chia sẻ dữ liệu',
-            'Chúng tôi không bán dữ liệu. Chỉ chia sẻ khi có yêu cầu pháp lý hoặc khi bạn chủ động gửi phản hồi.'
-          )
-
-          this.Section(
-            '4) Liên hệ',
-            'Email hỗ trợ: support@yourdomain.com (thay bằng email của bạn).'
+            'Dữ liệu người dùng',
+            'Chúng tôi không thu thập cũng như sử dụng dữ liệu người dùng dưới bất cứ hình thức nào.'
           )
 
           Text('Cập nhật lần cuối: 23/12/2025')
