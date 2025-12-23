@@ -1,0 +1,93 @@
+# Chính sách quyền riêng tư (Privacy Policy)
+
+**Hiệu lực từ:** [2025-12-23]  
+**Ứng dụng:** Vietnam Keyboard ([package: com.quocanh.vietnamkeyboard])  
+**Nhà phát triển:** Duong Quoc Anh
+**Email liên hệ:** quocanh21081992@gmail.com
+
+## 1. Tổng quan
+Vietnam Keyboard là ứng dụng bàn phím (Input Method) hỗ trợ nhập tiếng Việt. Chúng tôi tôn trọng quyền riêng tư của bạn và cam kết bảo vệ dữ liệu cá nhân.
+
+## 2. Dữ liệu chúng tôi thu thập
+**Chúng tôi không thu thập, không lưu trữ và không gửi lên máy chủ bất kỳ dữ liệu cá nhân nào**, bao gồm nhưng không giới hạn:
+- Nội dung bạn gõ (keystrokes), tin nhắn, mật khẩu
+- Danh bạ, ảnh, vị trí
+- Thông tin định danh thiết bị
+
+## 3. Dữ liệu được xử lý như thế nào
+Vì ứng dụng là **bàn phím**, nó cần xử lý ký tự bạn nhập để hiển thị và hỗ trợ gõ tiếng Việt.  
+Việc xử lý này:
+- Diễn ra **cục bộ trên thiết bị** (on-device)
+- **Không** được lưu lại bởi ứng dụng
+- **Không** được truyền ra ngoài thiết bị
+
+## 4. Quyền truy cập/permissions
+Ứng dụng có thể yêu cầu quyền cần thiết để hoạt động như một bàn phím trong hệ điều hành. Chúng tôi **không** sử dụng các quyền này để thu thập dữ liệu người dùng.
+
+## 5. Chia sẻ dữ liệu với bên thứ ba
+Chúng tôi **không chia sẻ** dữ liệu người dùng với bất kỳ bên thứ ba nào.  
+Ứng dụng **không** tích hợp SDK quảng cáo/analytics (nếu đúng theo cấu hình hiện tại của bạn).
+
+## 6. Bảo mật
+Chúng tôi thiết kế ứng dụng theo nguyên tắc “privacy by design”: không thu thập dữ liệu thì cũng không có dữ liệu để rò rỉ. Nếu trong tương lai có thay đổi liên quan đến dữ liệu, chúng tôi sẽ cập nhật chính sách này.
+
+## 7. Quyền của bạn (Data Subject Rights)
+Vì chúng tôi **không thu thập hoặc lưu trữ dữ liệu cá nhân**, chúng tôi không có dữ liệu cá nhân để:
+- cung cấp bản sao,
+- chỉnh sửa,
+- xóa từ máy chủ.
+
+Nếu bạn có thắc mắc về quyền riêng tư hoặc muốn xác nhận về cách xử lý dữ liệu, hãy liên hệ:
+- **Email:** [email@domain.com]
+
+## 8. Trẻ em
+Ứng dụng không hướng đến trẻ em dưới 13 tuổi và không cố tình thu thập dữ liệu từ trẻ em.
+
+## 9. Thay đổi chính sách
+Chúng tôi có thể cập nhật chính sách này khi cần. Phiên bản mới sẽ được đăng tại trang này và ghi rõ ngày hiệu lực.
+
+---
+
+# Privacy Policy (English)
+
+**Effective date:** [2025-12-23]  
+**App:** Vietnam Keyboard ([package: com.quocanh.vietnamkeyboard])  
+**Developer:** Duong Quoc Anh  
+**Contact email:** quocanh21081992@gmail.com
+
+## 1. Overview
+Vietnam Keyboard is an input method app that helps users type Vietnamese. We respect your privacy and are committed to protecting it.
+
+## 2. Data we collect
+We **do not collect, store, or transmit any personal data**, including but not limited to:
+- Anything you type (keystrokes), messages, passwords
+- Contacts, photos, location
+- Device identifiers
+
+## 3. How data is processed
+As a **keyboard**, the app must process your input to provide typing functionality. This processing:
+- Happens **locally on your device**
+- Is **not** stored by the app
+- Is **not** sent off the device
+
+## 4. Permissions
+The app may request permissions required to function as a system keyboard. We **do not** use these permissions to collect user data.
+
+## 5. Third-party sharing
+We **do not share** user data with any third parties.  
+The app **does not** include ads/analytics SDKs (if this matches your current build).
+
+## 6. Security
+We follow a “privacy by design” approach: since we don’t collect data, there is no server-side user data to leak. If this changes in the future, we will update this policy.
+
+## 7. Your rights (Data Subject Rights)
+Because we **do not collect or store personal data**, we do not hold personal data to provide, correct, or delete from servers.
+
+If you have any questions, contact:
+- **Email:** [email@domain.com]
+
+## 8. Children
+The app is not directed to children under 13 and does not knowingly collect data from children.
+
+## 9. Changes
+We may update this policy when necessary. Updates will be posted on this page with a new effective date.
