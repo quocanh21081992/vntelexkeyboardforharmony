@@ -2,6 +2,12 @@
   "subtypes": [
     {
       "id": "InputMethodExtAbility",
+      "label": "$string:vietnamese",
+      "locale": "vi-VN",
+      "mode": "lower"
+    },
+    {
+      "id": "InputMethodExtAbility",
       "label": "$string:english",
       "locale": "en-US",
       "mode": "lower"

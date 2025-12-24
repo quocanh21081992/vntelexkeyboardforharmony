@@ -10,7 +10,7 @@ struct About {
   }
 
   @Builder
-  private Section(title: string, body: string) {
+  private Section(title: ResourceStr, body: ResourceStr) {
     Column() {
       Text(title)
         .fontSize(16)
@@ -42,7 +42,7 @@ struct About {
           .padding({ left: 16, right: 10, top: 12, bottom: 12 })
           .onClick(() => this.back())
 
-        Text('Giới thiệu')
+        Text($r('app.string.about_header'))
           .fontSize(18)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.text_primary'))
@@ -56,27 +56,23 @@ struct About {
       Scroll() {
         Column({ space: 12 }) {
           this.Section(
-            'Vietnam Keyboard',
-            'Vietnam Keyboard là ứng dụng bàn phím tiếng Việt dành cho hệ điều hành Harmony OS 6 của Huawei. Đây là ứng dụng hoàn toàn miễn phí vì cộng đồng Huawei Việt Nam.'
+            $r('app.string.about_section_intro_title'),
+            $r('app.string.about_section_intro_body')
           )
 
           this.Section(
-            'Tính năng chính',
-            '- Gõ tiếng Việt Telex (sẽ hỗ trợ VNI trong bản cập nhật kế tiếp).\n' +
-              '- Tương thích với các ứng dụng Android chạy giả lập.'
+            $r('app.string.about_section_features_title'),
+            $r('app.string.about_section_features_body')
           )
 
           this.Section(
-            'Bản quyền',
-            'Vietnam Keyboard được phát triển bởi Anh Dương.\n' +
-          'Nếu bạn cảm thấy hài lòng về ứng dụng có thể donate cho mình nhé.\n' +
-          'STK: 0778211992\n' +
-          'Ngân hàng: MB Bank'
+            $r('app.string.about_section_license_title'),
+            $r('app.string.about_section_license_body')
           )
 
           this.Section(
-            'Liên hệ',
-            'Mọi ý kiến đóng góp, báo lỗi vui lòng gửi email về: quocanh21081992@gmail.com\nPhiên bản: 1.0.0'
+            $r('app.string.about_section_contact_title'),
+            $r('app.string.about_section_contact_body')
           )
 
           Blank().height(18)

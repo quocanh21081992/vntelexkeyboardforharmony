@@ -2,11 +2,11 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "module description"
+      "value": "Mô tả module"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "description"
+      "value": "Mô tả"
     },
     {
       "name": "EntryAbility_label",
@@ -15,6 +15,98 @@
     {
       "name": "english",
       "value": "English"
+    },
+    {
+      "name": "app_title",
+      "value": "Vietnam Keyboard"
+    },
+    {
+      "name": "menu_privacy_title",
+      "value": "Chính sách và quyền riêng tư"
+    },
+    {
+      "name": "menu_privacy_desc",
+      "value": "Thông tin thu thập dữ liệu và cách sử dụng"
+    },
+    {
+      "name": "menu_about_title",
+      "value": "Giới thiệu về ứng dụng"
+    },
+    {
+      "name": "menu_about_desc",
+      "value": "Tính năng, hướng dẫn và liên hệ"
+    },
+    {
+      "name": "btn_keyboard_activated",
+      "value": "Đã kích hoạt bàn phím"
+    },
+    {
+      "name": "btn_checking",
+      "value": "Đang kiểm tra..."
+    },
+    {
+      "name": "btn_open_settings",
+      "value": "Vào cài đặt hệ thống"
+    },
+    {
+      "name": "about_header",
+      "value": "Giới thiệu"
+    },
+    {
+      "name": "about_section_intro_title",
+      "value": "Vietnam Keyboard"
+    },
+    {
+      "name": "about_section_intro_body",
+      "value": "Vietnam Keyboard là ứng dụng bàn phím tiếng Việt dành cho hệ điều hành HarmonyOS 6 của Huawei. Đây là ứng dụng hoàn toàn miễn phí vì cộng đồng Huawei Việt Nam."
+    },
+    {
+      "name": "about_section_features_title",
+      "value": "Tính năng chính"
+    },
+    {
+      "name": "about_section_features_body",
+      "value": "- Gõ tiếng Việt Telex (sẽ hỗ trợ VNI trong bản cập nhật kế tiếp).\n- Tương thích với các ứng dụng Android chạy giả lập."
+    },
+    {
+      "name": "about_section_license_title",
+      "value": "Bản quyền"
+    },
+    {
+      "name": "about_section_license_body",
+      "value": "Vietnam Keyboard được phát triển bởi Anh Dương.\nNếu bạn cảm thấy hài lòng về ứng dụng có thể donate cho mình nhé.\nSTK: 0778211992\nNgân hàng: MB Bank"
+    },
+    {
+      "name": "about_section_contact_title",
+      "value": "Liên hệ"
+    },
+    {
+      "name": "about_section_contact_body",
+      "value": "Mọi ý kiến đóng góp, báo lỗi vui lòng gửi email về: quocanh21081992@gmail.com\nPhiên bản: 1.0.0"
+    },
+    {
+      "name": "privacy_header",
+      "value": "Chính sách & Quyền riêng tư"
+    },
+    {
+      "name": "privacy_section_user_data_title",
+      "value": "Dữ liệu người dùng"
+    },
+    {
+      "name": "privacy_section_user_data_body",
+      "value": "Chúng tôi không thu thập cũng như sử dụng dữ liệu người dùng dưới bất cứ hình thức nào."
+    },
+    {
+      "name": "privacy_last_update",
+      "value": "Cập nhật lần cuối: 23/12/2025"
+    },
+    {
+      "name": "InputMethodExtAbility_desc",
+      "value": "Vietnam Keyboard"
+    },
+    {
+      "name": "vietnamese",
+      "value": "Tiếng Việt"
     }
   ]
 }

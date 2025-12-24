@@ -10,7 +10,7 @@ struct Privacy {
   }
 
   @Builder
-  private Section(title: string, body: string) {
+  private Section(title: ResourceStr, body: ResourceStr) {
     Column() {
       Text(title)
         .fontSize(16)
@@ -42,7 +42,7 @@ struct Privacy {
           .padding({ left: 16, right: 10, top: 12, bottom: 12 })
           .onClick(() => this.back())
 
-        Text('Chính sách & Quyền riêng tư')
+        Text($r('app.string.privacy_header'))
           .fontSize(18)
           .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.text_primary'))
@@ -56,11 +56,11 @@ struct Privacy {
       Scroll() {
         Column({ space: 12 }) {
           this.Section(
-            'Dữ liệu người dùng',
-            'Chúng tôi không thu thập cũng như sử dụng dữ liệu người dùng dưới bất cứ hình thức nào.'
+            $r('app.string.privacy_section_user_data_title'),
+            $r('app.string.privacy_section_user_data_body')
           )
 
-          Text('Cập nhật lần cuối: 23/12/2025')
+          Text($r('app.string.privacy_last_update'))
             .fontSize(12)
             .fontColor($r('app.color.text_secondary'))
             .width('100%')

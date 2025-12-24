@@ -72,14 +72,17 @@ struct Index {
 
   private go(url: string): void {
     try {
-      router.pushUrl({ url })
+      // pushUrl returns a Promise in many SDK versions; handle rejection explicitly to satisfy ArkTSCheck
+      router.pushUrl({ url }).catch((err: BusinessError) => {
+        console.error(`pushUrl failed: ${err.code} ${err.message}`)
+      })
     } catch (e) {
-      console.error('pushUrl failed: ' + JSON.stringify(e))
+      console.error('pushUrl exception: ' + JSON.stringify(e))
     }
   }
 
   @Builder
-  private MenuItem(title: string, desc: string, url: string) {
+  private MenuItem(title: ResourceStr, desc: ResourceStr, url: string) {
     Row() {
       Column() {
         Text(title)
@@ -112,7 +115,7 @@ struct Index {
 
   build() {
     Column() {
-      Text('Vietnam Keyboard')
+      Text($r('app.string.app_title'))
         .width('100%')
         .textAlign(TextAlign.Center)
         .fontSize(24)
@@ -121,20 +124,20 @@ struct Index {
         .margin({ top: 6, bottom: 14 })
 
       Column({ space: 12 }) {
-        this.MenuItem('Chính sách và quyền riêng tư', 'Thông tin thu thập dữ liệu và cách sử dụng', 'pages/Privacy')
-        this.MenuItem('Giới thiệu về ứng dụng', 'Tính năng, hướng dẫn và liên hệ', 'pages/About')
+        this.MenuItem($r('app.string.menu_privacy_title'), $r('app.string.menu_privacy_desc'), 'pages/Privacy')
+        this.MenuItem($r('app.string.menu_about_title'), $r('app.string.menu_about_desc'), 'pages/About')
       }
       .width('100%')
 
       Blank().layoutWeight(1)
 
       if (this.imeActivated) {
-        Button('Đã kích hoạt bàn phím')
+        Button($r('app.string.btn_keyboard_activated'))
           .width('100%')
           .enabled(false)
           .margin({ bottom: 10 })
       } else {
-        Button(this.checkingIme ? 'Đang kiểm tra...' : 'Vào cài đặt hệ thống')
+        Button(this.checkingIme ? $r('app.string.btn_checking') : $r('app.string.btn_open_settings'))
           .width('100%')
           .enabled(!this.checkingIme)
           .margin({ bottom: 10 })

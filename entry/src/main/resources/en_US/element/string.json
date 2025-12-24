@@ -1,0 +1,112 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "Module description"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "Description"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Vietnam Keyboard"
+    },
+    {
+      "name": "english",
+      "value": "English"
+    },
+    {
+      "name": "app_title",
+      "value": "Vietnam Keyboard"
+    },
+    {
+      "name": "menu_privacy_title",
+      "value": "Privacy Policy"
+    },
+    {
+      "name": "menu_privacy_desc",
+      "value": "Data collection and how it is used"
+    },
+    {
+      "name": "menu_about_title",
+      "value": "About"
+    },
+    {
+      "name": "menu_about_desc",
+      "value": "Features, guide, and contact"
+    },
+    {
+      "name": "btn_keyboard_activated",
+      "value": "Keyboard activated"
+    },
+    {
+      "name": "btn_checking",
+      "value": "Checking..."
+    },
+    {
+      "name": "btn_open_settings",
+      "value": "Open system settings"
+    },
+    {
+      "name": "about_header",
+      "value": "About"
+    },
+    {
+      "name": "about_section_intro_title",
+      "value": "Vietnam Keyboard"
+    },
+    {
+      "name": "about_section_intro_body",
+      "value": "Vietnam Keyboard is a Vietnamese input method for Huawei HarmonyOS 6. This app is completely free for the Huawei Vietnam community."
+    },
+    {
+      "name": "about_section_features_title",
+      "value": "Key features"
+    },
+    {
+      "name": "about_section_features_body",
+      "value": "- Vietnamese Telex input (VNI will be supported in a future update).\n- Compatible with Android apps running in the emulator."
+    },
+    {
+      "name": "about_section_license_title",
+      "value": "Credits"
+    },
+    {
+      "name": "about_section_license_body",
+      "value": "Vietnam Keyboard is developed by Anh Dương.\nIf you enjoy the app, you can support me via donation.\nAccount: 0778211992\nBank: MB Bank"
+    },
+    {
+      "name": "about_section_contact_title",
+      "value": "Contact"
+    },
+    {
+      "name": "about_section_contact_body",
+      "value": "Feedback/bug reports: quocanh21081992@gmail.com\nVersion: 1.0.0"
+    },
+    {
+      "name": "privacy_header",
+      "value": "Privacy Policy"
+    },
+    {
+      "name": "privacy_section_user_data_title",
+      "value": "User data"
+    },
+    {
+      "name": "privacy_section_user_data_body",
+      "value": "We do not collect or use any user data in any way."
+    },
+    {
+      "name": "privacy_last_update",
+      "value": "Last updated: Dec 23, 2025"
+    },
+    {
+      "name": "InputMethodExtAbility_desc",
+      "value": "Vietnam Keyboard"
+    },
+    {
+      "name": "vietnamese",
+      "value": "Vietnamese"
+    }
+  ]
+}

@@ -6,9 +6,9 @@
         "type": "HarmonyOS",
         "material": {
           "storeFile": "C:/Users/quoca/Cerf/Vietnam Keyboard.p12",
-          "storePassword": "0000001DD8CD79D9F20393505656801AFED5A501F18A30C5A4D8EBC452BED1B3DCF937B7EC8F09B731BBB63D64",
+          "storePassword": "0000001D1BCA21FF1D62ED18571929B6EE64F894F0EFEF0669FA1B056EBA9DE9B5E07570D5C180AC021C72AFFF",
           "keyAlias": "release",
-          "keyPassword": "0000001D596E2E71AA4E3C3D7F256073EEDAA3DB01E2CC029EDC340EE227ED75BB86EAE09A43AF0D8FDBBAADAC",
+          "keyPassword": "0000001DCF9D347B561A16C91AEB198C02250E23EFC1CDADEBE26C5C2E5843B518351AFD6EA3964E23A04EAA72",
           "signAlg": "SHA256withECDSA",
           "profile": "C:/Users/quoca/Cerf/Vietnam KeyboardRelease.p7b",
           "certpath": "C:/Users/quoca/Cerf/Vietnam Keyboard.cer"
