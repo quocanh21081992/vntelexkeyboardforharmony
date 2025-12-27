@@ -38,7 +38,8 @@ struct Settings {
     this.loading = true
     this.errorText = ''
     try {
-      const ctx: common.UIAbilityContext = getContext(this) as common.UIAbilityContext
+      // getContext() is deprecated (API 18+). Use UIContext.getHostContext() instead.
+      const ctx: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext
       readKeyboardHeightVp(ctx).then((h: number) => {
         this.heightText = String(h)
         this.loading = false
@@ -96,7 +97,8 @@ struct Settings {
     this.saving = true
 
     try {
-      const ctx: common.UIAbilityContext = getContext(this) as common.UIAbilityContext
+      // getContext() is deprecated (API 18+). Use UIContext.getHostContext() instead.
+      const ctx: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext
       writeKeyboardHeightVp(ctx, n).then(() => {
         // ✅ (Tuỳ chọn) bump seq để debug/log dễ hơn, không cần nút riêng nữa
         try {

@@ -73,13 +73,22 @@ export class TelexEngine {
     if (this.isDKey(keyChar)) {
       const nextD: string = this.applyDKey(currentWord, keyChar);
       if (nextD === currentWord) {
-        out.kind = TelexActionKind.Insert;
-        out.text = keyChar;
-        out.newWord = currentWord + keyChar;
+        // Insert literal 'd' => nếu trước đó đã bỏ dấu thì cần reflow lại vị trí dấu
+        const candidate: string = this.postProcessWord(currentWord + keyChar);
+        if (candidate !== currentWord + keyChar) {
+          out.kind = TelexActionKind.Replace;
+          out.text = candidate;
+          out.newWord = candidate;
+        } else {
+          out.kind = TelexActionKind.Insert;
+          out.text = keyChar;
+          out.newWord = currentWord + keyChar;
+        }
       } else {
+        const fixed: string = this.postProcessWord(nextD);
         out.kind = TelexActionKind.Replace;
-        out.text = nextD;
-        out.newWord = nextD;
+        out.text = fixed;
+        out.newWord = fixed;
       }
       return out;
     }
@@ -88,13 +97,22 @@ export class TelexEngine {
     if (this.isShapeKey(keyChar)) {
       const next: string = this.applyShapeKey(currentWord, keyChar);
       if (next === currentWord) {
-        out.kind = TelexActionKind.Insert;
-        out.text = keyChar;
-        out.newWord = currentWord + keyChar;
+        // Insert literal a/e/o/w => nếu trước đó đã bỏ dấu thì cần reflow lại vị trí dấu
+        const candidate: string = this.postProcessWord(currentWord + keyChar);
+        if (candidate !== currentWord + keyChar) {
+          out.kind = TelexActionKind.Replace;
+          out.text = candidate;
+          out.newWord = candidate;
+        } else {
+          out.kind = TelexActionKind.Insert;
+          out.text = keyChar;
+          out.newWord = currentWord + keyChar;
+        }
       } else {
+        const fixed: string = this.postProcessWord(next);
         out.kind = TelexActionKind.Replace;
-        out.text = next;
-        out.newWord = next;
+        out.text = fixed;
+        out.newWord = fixed;
       }
       return out;
     }
@@ -107,19 +125,91 @@ export class TelexEngine {
         out.text = keyChar;
         out.newWord = currentWord + keyChar;
       } else {
+        const fixed: string = this.postProcessWord(next);
         out.kind = TelexActionKind.Replace;
-        out.text = next;
-        out.newWord = next;
+        out.text = fixed;
+        out.newWord = fixed;
       }
       return out;
     }
 
-    // Normal char
-    out.kind = TelexActionKind.Insert;
-    out.text = keyChar;
-    out.newWord = currentWord + keyChar;
+    // Normal char (bao gồm i/u/y, phụ âm...)
+    // Nếu trước đó đã bỏ dấu nhưng sau đó gõ thêm chữ làm thay đổi vần (ví dụ thiếu chữ),
+    // ta sẽ tự "reflow" dấu về đúng nguyên âm theo rule hiện tại.
+    const candidate: string = this.postProcessWord(currentWord + keyChar);
+    if (candidate !== currentWord + keyChar) {
+      out.kind = TelexActionKind.Replace;
+      out.text = candidate;
+      out.newWord = candidate;
+    } else {
+      out.kind = TelexActionKind.Insert;
+      out.text = keyChar;
+      out.newWord = currentWord + keyChar;
+    }
     return out;
   }
+
+  /**
+   * Post-process sau mỗi key:
+   * - Nếu trong từ đã có dấu thanh (sắc/huyền/hỏi/ngã/nặng)
+   *   nhưng người dùng tiếp tục gõ thêm chữ làm đổi cụm nguyên âm,
+   *   tự động đặt lại dấu về đúng vị trí (giống UniKey).
+   */
+  private postProcessWord(word: string): string {
+    return this.relocateToneIfNeeded(word);
+  }
+
+  private relocateToneIfNeeded(word: string): string {
+    if (word.length === 0) return word;
+
+    const chars: Array<string> = word.split('');
+    const span: VowelSpan | undefined = this.findVowelSpan(chars);
+    if (!span) return word;
+
+    // tìm dấu thanh hiện tại (nếu có)
+    let currentTone: number = 0;
+    let currentTonePos: number = -1;
+    for (let i = span.start; i <= span.end; i++) {
+      const info: VowelInfo | undefined = this.getVowelInfo(chars[i]);
+      if (info && info.tone > 0) {
+        currentTone = info.tone;
+        currentTonePos = i;
+        break;
+      }
+    }
+    if (currentTone === 0 || currentTonePos < 0) return word;
+
+    // compute vsi/vei giống applyToneKey (xử lý qu/gi)
+    let vsi: number = span.start;
+    const vei: number = span.end;
+    if (vsi + 1 <= vei) {
+      const b0: string = this.toBaseLetter(chars[vsi]);
+      if (b0 === 'u' && vsi - 1 >= 0) {
+        const prev: string = chars[vsi - 1].toLowerCase();
+        if (prev === 'q') vsi = vsi + 1;
+      }
+      if (b0 === 'i' && vsi - 1 >= 0) {
+        const prev2: string = chars[vsi - 1].toLowerCase();
+        if (prev2 === 'g') vsi = vsi + 1;
+      }
+    }
+
+    const expectedPos: number = this.findToneMarkPosition(chars, vsi, vei);
+    if (expectedPos < 0 || expectedPos === currentTonePos) return word;
+
+    // clear tone on all vowels in span (an toàn nếu lỡ có nhiều dấu)
+    for (let i = span.start; i <= span.end; i++) {
+      const info: VowelInfo | undefined = this.getVowelInfo(chars[i]);
+      if (info && info.tone > 0) {
+        chars[i] = this.setTone(chars[i], 0);
+      }
+    }
+
+    // apply tone to expected position
+    chars[expectedPos] = this.setTone(chars[expectedPos], currentTone);
+    return chars.join('');
+  }
+
 
   // ---------- Key classification ----------
   private isToneKey(ch: string): boolean {
