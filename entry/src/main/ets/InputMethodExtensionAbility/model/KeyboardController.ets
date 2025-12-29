@@ -2,8 +2,18 @@ import inputMethodEngine from '@ohos.inputMethodEngine';
 import type InputMethodExtensionContext from '@ohos.InputMethodExtensionContext';
 import display from '@ohos.display';
 
-import { TelexEngine, TelexActionKind } from './TelexEngine';
-import { readKeyboardHeightVp, writeKeyboardHeightVp, DEFAULT_KEYBOARD_HEIGHT_VP, MIN_KEYBOARD_HEIGHT_VP, MAX_KEYBOARD_HEIGHT_VP } from './SettingsStore';
+import { TelexEngine, TelexActionKind, TelexResult } from './TelexEngine';
+import { VniEngine } from './VniEngine';
+import {
+  readKeyboardHeightVp,
+  writeKeyboardHeightVp,
+  readInputMethod,
+  writeInputMethod,
+  type InputMethodType,
+  DEFAULT_KEYBOARD_HEIGHT_VP,
+  MIN_KEYBOARD_HEIGHT_VP,
+  MAX_KEYBOARD_HEIGHT_VP
+} from './SettingsStore';
 
 const UI_PAGE: string = 'InputMethodExtensionAbility/pages/Index';
 
@@ -86,10 +96,14 @@ export class KeyboardController {
   // ===== Buffer mode (for Android VM compatibility) =====
   private readonly bufferMode: boolean = true;
 
-  // ===== Telex composing/buffer =====
+  // ===== IME mode =====
+  private inputMethod: InputMethodType = 'telex';
+
+  // ===== Composing/buffer =====
   private composingWord: string = '';
   // IMPORTANT: KHÔNG readonly để có thể "reset" bằng cách tạo instance mới
   private telex: TelexEngine = new TelexEngine(true, false);
+  private vni: VniEngine = new VniEngine();
 
   // ===== Backspace hold-to-repeat =====
   private backspaceHolding: boolean = false;
@@ -138,6 +152,9 @@ export class KeyboardController {
         // (Settings may be changed from the main app process.)
         this.refreshPanelHeightFromSettings();
 
+        // Apply latest input method setting as well.
+        this.refreshInputMethodFromSettings();
+
         this.notifySessionStart();
 
         if (this.panel) {
@@ -170,9 +187,44 @@ export class KeyboardController {
     this.telex = new TelexEngine(true, false);
   }
 
+  private resetVni(): void {
+    // VNI engine is stateless, but recreate to keep behavior consistent.
+    this.vni = new VniEngine();
+  }
+
+  private resetEngines(): void {
+    this.resetTelex();
+    this.resetVni();
+  }
+
   private resetComposing(): void {
     this.composingWord = '';
-    this.resetTelex();
+    this.resetEngines();
+  }
+
+  // Called by UI rebuild event or when reading settings.
+  applyInputMethod(method: InputMethodType): void {
+    const next: InputMethodType = (method === 'vni') ? 'vni' : 'telex';
+    if (this.inputMethod === next) return;
+    this.inputMethod = next;
+    // clear composing buffer when switching engine
+    this.resetComposing();
+
+    const ctx: object | undefined = this.ctxObj;
+    if (ctx) {
+      // persist to IME preferences so next session uses it
+      try { writeInputMethod(ctx as never, next).then(() => { /* ignore */ }).catch(() => { /* ignore */ }); } catch { /* ignore */ }
+    }
+  }
+
+  private refreshInputMethodFromSettings(): void {
+    const ctx: object | undefined = this.ctxObj;
+    if (!ctx) return;
+    readInputMethod(ctx as never).then((m: InputMethodType) => {
+      this.inputMethod = (m === 'vni') ? 'vni' : 'telex';
+    }).catch(() => {
+      this.inputMethod = 'telex';
+    });
   }
 
   private async initPanel(
@@ -278,6 +330,12 @@ export class KeyboardController {
     return (c >= 65 && c <= 90) || (c >= 97 && c <= 122);
   }
 
+  private isVniAccentDigit(ch: string): boolean {
+    if (ch.length !== 1) return false;
+    const c: number = ch.charCodeAt(0);
+    return c >= 49 && c <= 57; // '1'..'9'
+  }
+
   /**
    * ✅ FIX QUAN TRỌNG CHO ANDROID VM:
    * - Clear buffer NGAY LẬP TỨC (sync)
@@ -311,9 +369,9 @@ export class KeyboardController {
     // 1) flush từ telex đang compose (nếu có)
     if (this.composingWord.length > 0) {
       await this.commitBufferAndTailSingleInsert('');
-      this.resetTelex();
+      this.resetEngines();
     } else {
-      this.resetTelex();
+      this.resetEngines();
     }
 
     // 2) lấy enterKeyType để bấm đúng "Done/Search/Go/Next..."
@@ -376,19 +434,37 @@ export class KeyboardController {
         return;
       }
 
-      // Not letter => commit buffer + char (ONE insert)
-      if (!this.isAsciiLetter(text)) {
+      if (this.inputMethod === 'telex') {
+        // Not letter => commit buffer + char (ONE insert)
+        if (!this.isAsciiLetter(text)) {
+          await this.commitBufferAndTailSingleInsert(text);
+          return;
+        }
+
+        // letter => apply telex to buffer only
+        const r: TelexResult = this.telex.apply(this.composingWord, text);
+        if (r.kind === TelexActionKind.Replace) {
+          this.composingWord = r.newWord; // oo -> ô in buffer
+          return;
+        }
+        this.composingWord = this.composingWord + text;
+        return;
+      }
+
+      // ---- VNI mode ----
+      if (!(this.isAsciiLetter(text) || this.isVniAccentDigit(text))) {
+        // punctuation/symbol => commit buffer + char
         await this.commitBufferAndTailSingleInsert(text);
         return;
       }
 
-      // letter => apply telex to buffer only
-      const r = this.telex.apply(this.composingWord, text);
+      const r: TelexResult = this.vni.apply(this.composingWord, text);
       if (r.kind === TelexActionKind.Replace) {
-        this.composingWord = r.newWord; // oo -> ô in buffer
+        this.composingWord = r.newWord;
         return;
       }
-      this.composingWord = this.composingWord + text;
+      // Insert: may differ from input (e.g. digit not applicable)
+      this.composingWord = this.composingWord + r.text;
       return;
     }
 
@@ -461,7 +537,7 @@ export class KeyboardController {
       if (this.composingWord.length > 0) {
         this.composingWord = this.composingWord.slice(0, this.composingWord.length - 1);
         // reset engine instance để state sạch cho lần gõ tiếp
-        this.resetTelex();
+        this.resetEngines();
         return;
       }
     }

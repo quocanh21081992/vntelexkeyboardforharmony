@@ -7,6 +7,11 @@ export const PREF_NAME: string = 'vk_settings_app';
 export const KEY_KEYBOARD_HEIGHT_VP: string = 'keyboard_height_vp';
 export const KEY_KEYBOARD_RELOAD_SEQ: string = 'keyboard_reload_seq';
 
+// Input method: 'telex' | 'vni'
+export const KEY_INPUT_METHOD: string = 'input_method';
+export type InputMethodType = 'telex' | 'vni';
+export const DEFAULT_INPUT_METHOD: InputMethodType = 'telex';
+
 // Defaults / bounds (vp)
 export const DEFAULT_KEYBOARD_HEIGHT_VP: number = 270;
 export const MIN_KEYBOARD_HEIGHT_VP: number = 180;
@@ -89,5 +94,28 @@ export async function bumpKeyboardReloadSeq(context: object): Promise<number> {
     return next;
   } catch {
     return 0;
+  }
+}
+
+export async function readInputMethod(context: object): Promise<InputMethodType> {
+  try {
+    const pref = await preferences.getPreferences(context as never, PREF_NAME);
+    const raw: number | string | boolean = (await pref.get(KEY_INPUT_METHOD, DEFAULT_INPUT_METHOD)) as number | string | boolean;
+    const v: string = String(raw).toLowerCase();
+    if (v === 'vni') return 'vni';
+    return 'telex';
+  } catch {
+    return DEFAULT_INPUT_METHOD;
+  }
+}
+
+export async function writeInputMethod(context: object, method: InputMethodType): Promise<void> {
+  try {
+    const pref = await preferences.getPreferences(context as never, PREF_NAME);
+    const v: InputMethodType = (method === 'vni') ? 'vni' : 'telex';
+    try { pref.put(KEY_INPUT_METHOD, v); } catch { /* ignore */ }
+    try { await pref.flush(); } catch { /* ignore */ }
+  } catch {
+    // ignore
   }
 }

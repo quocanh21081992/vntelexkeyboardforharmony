@@ -7,6 +7,9 @@ import {
   readKeyboardHeightVp,
   writeKeyboardHeightVp,
   bumpKeyboardReloadSeq,
+  readInputMethod,
+  writeInputMethod,
+  type InputMethodType,
   DEFAULT_KEYBOARD_HEIGHT_VP,
   MIN_KEYBOARD_HEIGHT_VP,
   MAX_KEYBOARD_HEIGHT_VP
@@ -18,9 +21,14 @@ const EVENT_REBUILD_KEYBOARD: string = 'com.quoca.vntelexkeyboard.REBUILD';
 @Component
 struct Settings {
   @State private heightText: string = ''
+  @State private inputMethod: InputMethodType = 'telex'
   @State private loading: boolean = true
   @State private saving: boolean = false
   @State private errorText: string = ''
+
+  private methodLabel(m: InputMethodType): string {
+    return m === 'vni' ? 'VNI' : 'Telex'
+  }
 
   private back(): void {
     try {
@@ -40,15 +48,23 @@ struct Settings {
     try {
       // getContext() is deprecated (API 18+). Use UIContext.getHostContext() instead.
       const ctx: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext
-      readKeyboardHeightVp(ctx).then((h: number) => {
+      Promise.all([
+        readKeyboardHeightVp(ctx).catch(() => DEFAULT_KEYBOARD_HEIGHT_VP),
+        readInputMethod(ctx).catch(() => 'telex' as InputMethodType)
+      ]).then((vals: Array<number | InputMethodType>) => {
+        const h: number = vals[0] as number
+        const m: InputMethodType = vals[1] as InputMethodType
         this.heightText = String(h)
+        this.inputMethod = m
         this.loading = false
       }).catch((_e: BusinessError) => {
         this.heightText = String(DEFAULT_KEYBOARD_HEIGHT_VP)
+        this.inputMethod = 'telex'
         this.loading = false
       })
     } catch (e) {
       this.heightText = String(DEFAULT_KEYBOARD_HEIGHT_VP)
+      this.inputMethod = 'telex'
       this.loading = false
     }
   }
@@ -69,9 +85,42 @@ struct Settings {
     return Math.round(n)
   }
 
-  private publishRebuild(heightVp: number): void {
+  private getHeightForRebuild(): number {
+    const n: number | undefined = this.parseHeight()
+    if (n === undefined || !Number.isFinite(n)) return DEFAULT_KEYBOARD_HEIGHT_VP
+    if (n < MIN_KEYBOARD_HEIGHT_VP) return MIN_KEYBOARD_HEIGHT_VP
+    if (n > MAX_KEYBOARD_HEIGHT_VP) return MAX_KEYBOARD_HEIGHT_VP
+    return n
+  }
+
+  private onPickInputMethod(m: InputMethodType): void {
+    this.inputMethod = m
     try {
-      commonEventManager.publish(EVENT_REBUILD_KEYBOARD, { data: String(heightVp) }, (_err?: BusinessError) => {
+      const ctx: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext
+      writeInputMethod(ctx, m).then(() => { /* ignore */ }).catch(() => { /* ignore */ })
+      // Keep same behavior as height changes: bump seq + rebuild keyboard.
+      bumpKeyboardReloadSeq(ctx).then(() => { /* ignore */ }).catch(() => { /* ignore */ })
+    } catch {
+      // ignore
+    }
+    const hVp: number = this.getHeightForRebuild()
+    this.publishRebuild(hVp, m)
+  }
+
+  @Builder
+  private InputMethodMenu() {
+    Menu() {
+      MenuItem({ content: 'Telex' })
+        .onClick(() => this.onPickInputMethod('telex'))
+      MenuItem({ content: 'VNI' })
+        .onClick(() => this.onPickInputMethod('vni'))
+    }
+  }
+
+  private publishRebuild(heightVp: number, method: InputMethodType): void {
+    try {
+      const payload: string = JSON.stringify({ heightVp: heightVp, inputMethod: method })
+      commonEventManager.publish(EVENT_REBUILD_KEYBOARD, { data: payload }, (_err?: BusinessError) => {
         // ignore
       })
     } catch {
@@ -107,8 +156,15 @@ struct Settings {
           // ignore
         }
 
+        // Persist input method (for UIAbility pref). Keyboard will also persist it after rebuild.
+        try {
+          writeInputMethod(ctx, this.inputMethod).then(() => { /* ignore */ }).catch(() => { /* ignore */ })
+        } catch {
+          // ignore
+        }
+
         // ✅ GỘP REBUILD VÀO NÚT LƯU
-        this.publishRebuild(n)
+        this.publishRebuild(n, this.inputMethod)
 
         this.saving = false
         this.showToast('Đã lưu cài đặt.')
@@ -152,6 +208,27 @@ struct Settings {
         Column({ space: 12 }) {
           // Card
           Column() {
+            // Input method
+            Text('Kiểu gõ')
+              .fontSize(16)
+              .fontWeight(FontWeight.Medium)
+              .fontColor($r('app.color.text_primary'))
+              .width('100%')
+              .textAlign(TextAlign.Start)
+
+            Row() {
+              Button(this.methodLabel(this.inputMethod))
+                .layoutWeight(1)
+                .height(44)
+                .borderRadius(10)
+                .backgroundColor($r('app.color.page_bg'))
+                .bindMenu(this.InputMethodMenu)
+            }
+            .width('100%')
+            .margin({ top: 12 })
+
+            Divider().margin({ top: 16, bottom: 16 })
+
             Text($r('app.string.settings_keyboard_height_title'))
               .fontSize(16)
               .fontWeight(FontWeight.Medium)

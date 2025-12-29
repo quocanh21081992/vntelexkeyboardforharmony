@@ -12,6 +12,12 @@ import {
 import { BusinessError, commonEventManager } from '@kit.BasicServicesKit';
 import { readKeyboardHeightVp, DEFAULT_KEYBOARD_HEIGHT_VP, clampKeyboardHeightVp } from '../model/SettingsStore';
 
+interface RebuildPayload {
+  heightVp?: number;
+  inputMethod?: string;
+}
+
+
 const EVENT_REBUILD_KEYBOARD: string = 'com.quoca.vntelexkeyboard.REBUILD';
 
 class KbStyle {
@@ -134,14 +140,43 @@ struct Index {
         commonEventManager.subscribe(subscriber, (err: BusinessError, data: commonEventManager.CommonEventData) => {
           if (err) return;
 
-          const n: number = Number(data.data);
-          const hVp: number = clampKeyboardHeightVp(Number.isFinite(n) ? n : DEFAULT_KEYBOARD_HEIGHT_VP);
+          const raw: string = String(data.data ?? '');
+          let nextHeightVp: number | undefined = undefined;
+          let nextInputMethod: string | undefined = undefined;
+
+          // Newer payload: JSON { heightVp, inputMethod }
+          const t: string = raw.trim();
+          if (t.startsWith('{') && t.endsWith('}')) {
+            try {
+              const obj = JSON.parse(t) as RebuildPayload;
+              if (typeof obj.heightVp === 'number' && Number.isFinite(obj.heightVp)) {
+                nextHeightVp = obj.heightVp;
+              }
+              if (typeof obj.inputMethod === 'string') {
+                const m: string = obj.inputMethod.toLowerCase();
+                if (m === 'vni' || m === 'telex') nextInputMethod = m;
+              }
+            } catch {
+              // ignore
+            }
+          }
+
+          // Backward payload: plain number
+          if (nextHeightVp === undefined) {
+            const n: number = Number(raw);
+            if (Number.isFinite(n)) nextHeightVp = n;
+          }
+
+          const hVp: number = clampKeyboardHeightVp(nextHeightVp !== undefined ? nextHeightVp : DEFAULT_KEYBOARD_HEIGHT_VP);
 
           // remember wanted total for foldable correction
           this.wantedTotalVp = hVp + this.s.safeBottom;
 
-          // resize panel
+          // apply settings
           try { keyboardController.applyKeyboardHeightVp(hVp); } catch { /* ignore */ }
+          if (nextInputMethod) {
+            try { keyboardController.applyInputMethod(nextInputMethod === 'vni' ? 'vni' : 'telex'); } catch { /* ignore */ }
+          }
 
           // rebuild UI scale
           this.applyScaleFromContentHeightVp(hVp);

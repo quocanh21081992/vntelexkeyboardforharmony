@@ -1,247 +1,93 @@
-// entry/src/main/ets/pages/Settings.ets
-import type { common } from '@kit.AbilityKit'
-import type { BusinessError } from '@kit.BasicServicesKit'
-import { commonEventManager } from '@kit.BasicServicesKit'
-
-import {
-  readKeyboardHeightVp,
-  writeKeyboardHeightVp,
-  bumpKeyboardReloadSeq,
-  DEFAULT_KEYBOARD_HEIGHT_VP,
-  MIN_KEYBOARD_HEIGHT_VP,
-  MAX_KEYBOARD_HEIGHT_VP
-} from './SettingsStore'
-
-const EVENT_REBUILD_KEYBOARD: string = 'com.quoca.vntelexkeyboard.REBUILD';
+// entry/src/main/ets/pages/Index.ets
+// Home page (Entry). Chạm vào từng mục để mở trang tương ứng.
 
 @Entry
 @Component
-struct Settings {
-  @State private heightText: string = ''
-  @State private loading: boolean = true
-  @State private saving: boolean = false
-  @State private errorText: string = ''
-
-  private back(): void {
+struct Index {
+  private go(url: string): void {
     try {
-      this.getUIContext().getRouter().back()
+      this.getUIContext().getRouter().pushUrl({ url })
     } catch (e) {
-      console.error('router back failed: ' + JSON.stringify(e))
+      console.error('router push failed: ' + JSON.stringify(e))
     }
   }
 
-  aboutToAppear(): void {
-    this.load()
-  }
+  @Builder
+  private MenuItem(title: string, desc: string, url: string) {
+    Row() {
+      Column() {
+        Text(title)
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+          .fontColor($r('app.color.text_primary'))
+          .width('100%')
+          .textAlign(TextAlign.Start)
 
-  private load(): void {
-    this.loading = true
-    this.errorText = ''
-    try {
-      const ctx: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext
-      readKeyboardHeightVp(ctx).then((h: number) => {
-        this.heightText = String(h)
-        this.loading = false
-      }).catch((_e: BusinessError) => {
-        this.heightText = String(DEFAULT_KEYBOARD_HEIGHT_VP)
-        this.loading = false
-      })
-    } catch (e) {
-      this.heightText = String(DEFAULT_KEYBOARD_HEIGHT_VP)
-      this.loading = false
+        Text(desc)
+          .margin({ top: 8 })
+          .fontSize(13)
+          .fontColor($r('app.color.text_secondary'))
+          .lineHeight(18)
+          .width('100%')
+          .textAlign(TextAlign.Start)
+      }
+      .layoutWeight(1)
+
+      Text('›')
+        .fontSize(22)
+        .fontColor($r('app.color.text_secondary'))
+        .margin({ left: 12 })
     }
-  }
-
-  private showToast(message: string): void {
-    try {
-      this.getUIContext().getPromptAction().showToast({ message })
-    } catch {
-      // ignore
-    }
-  }
-
-  private parseHeight(): number | undefined {
-    const raw: string = this.heightText.trim()
-    if (raw.length === 0) return undefined
-    const n: number = Number(raw)
-    if (!Number.isFinite(n)) return undefined
-    return Math.round(n)
-  }
-
-  private publishRebuild(heightVp: number): void {
-    try {
-      commonEventManager.publish(EVENT_REBUILD_KEYBOARD, { data: String(heightVp) }, (_err?: BusinessError) => {
-        // ignore
-      })
-    } catch {
-      // ignore
-    }
-  }
-
-  private save(): void {
-    if (this.saving || this.loading) return
-
-    const n: number | undefined = this.parseHeight()
-    if (n === undefined) {
-      this.errorText = 'Vui lòng nhập số hợp lệ.'
-      return
-    }
-
-    if (n < MIN_KEYBOARD_HEIGHT_VP || n > MAX_KEYBOARD_HEIGHT_VP) {
-      this.errorText = `Độ cao phải trong khoảng ${MIN_KEYBOARD_HEIGHT_VP}–${MAX_KEYBOARD_HEIGHT_VP} vp.`
-      return
-    }
-
-    this.errorText = ''
-    this.saving = true
-
-    try {
-      const ctx: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext
-      writeKeyboardHeightVp(ctx, n).then(() => {
-        // ✅ bump seq (debug/log) — vẫn giữ nhưng không có nút riêng nữa
-        try {
-          bumpKeyboardReloadSeq(ctx).then(() => { /* ignore */ }).catch(() => { /* ignore */ })
-        } catch {
-          // ignore
-        }
-
-        // ✅ gộp rebuild vào Save
-        this.publishRebuild(n)
-
-        this.saving = false
-        this.showToast('Đã lưu cài đặt.')
-      }).catch((_e: BusinessError) => {
-        this.saving = false
-        this.showToast('Lưu thất bại. Vui lòng thử lại.')
-      })
-    } catch (e) {
-      this.saving = false
-      this.showToast('Lưu thất bại. Vui lòng thử lại.')
-    }
-  }
-
-  private resetToDefault(): void {
-    this.heightText = String(DEFAULT_KEYBOARD_HEIGHT_VP)
-    this.errorText = ''
+    .width('100%')
+    .padding(16)
+    .backgroundColor($r('app.color.card_bg'))
+    .borderRadius(14)
+    .onClick(() => {
+      this.go(url)
+    })
   }
 
   build() {
-    Column() {
-      // Header
-      Row() {
-        Text('←')
-          .fontSize(20)
-          .fontColor($r('app.color.text_primary'))
-          .padding({ left: 16, right: 10, top: 12, bottom: 12 })
-          .onClick(() => this.back())
-
-        Text($r('app.string.settings_header'))
-          .fontSize(18)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_primary'))
-          .textAlign(TextAlign.Start)
-          .layoutWeight(1)
-
-        Blank().width(46)
-      }
-      .width('100%')
-
-      Scroll() {
-        Column({ space: 12 }) {
-          // Card
-          Column() {
-            Text($r('app.string.settings_keyboard_height_title'))
-              .fontSize(16)
-              .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.text_primary'))
-              .width('100%')
-              .textAlign(TextAlign.Start)
-
-            Text($r('app.string.settings_keyboard_height_desc'))
-              .margin({ top: 8 })
-              .fontSize(13)
-              .fontColor($r('app.color.text_secondary'))
-              .lineHeight(18)
-              .width('100%')
-              .textAlign(TextAlign.Start)
-
-            Row() {
-              TextInput({ text: this.heightText, placeholder: String(DEFAULT_KEYBOARD_HEIGHT_VP) })
-                .type(InputType.Number)
-                .onChange((v: string) => {
-                  this.heightText = v
-                  this.errorText = ''
-                })
-                .layoutWeight(1)
-                .height(44)
-                .padding({ left: 12, right: 12 })
-                .borderRadius(10)
-                .backgroundColor($r('app.color.page_bg'))
-
-              Text('vp')
-                .fontSize(14)
-                .fontColor($r('app.color.text_secondary'))
-                .margin({ left: 10 })
-            }
-            .width('100%')
-            .margin({ top: 12 })
-
-            if (this.errorText.length > 0) {
-              Text(this.errorText)
-                .margin({ top: 10 })
-                .fontSize(12)
-                .fontColor($r('app.color.text_secondary'))
-                .width('100%')
-                .textAlign(TextAlign.Start)
-            }
-
-            Row({ space: 10 }) {
-              Button($r('app.string.settings_reset'))
-                .layoutWeight(1)
-                .onClick(() => this.resetToDefault())
-
-              Button(this.saving ? $r('app.string.settings_saving') : $r('app.string.settings_save'))
-                .layoutWeight(1)
-                .enabled(!this.loading && !this.saving)
-                .onClick(() => this.save())
-            }
-            .width('100%')
-            .margin({ top: 14 })
-          }
-          .width('100%')
-          .padding(16)
-          .backgroundColor($r('app.color.card_bg'))
-          .borderRadius(14)
-
-          Column() {
-            Text($r('app.string.settings_note_title'))
-              .fontSize(16)
-              .fontWeight(FontWeight.Medium)
-              .fontColor($r('app.color.text_primary'))
-              .width('100%')
-              .textAlign(TextAlign.Start)
-
-            Text($r('app.string.settings_note_body'))
-              .margin({ top: 8 })
-              .fontSize(13)
-              .fontColor($r('app.color.text_secondary'))
-              .lineHeight(18)
-              .width('100%')
-              .textAlign(TextAlign.Start)
-          }
-          .width('100%')
-          .padding(16)
-          .backgroundColor($r('app.color.card_bg'))
-          .borderRadius(14)
-
-          Blank().height(18)
-        }
+    Column({ space: 12 }) {
+      Text('Vietnam Keyboard')
+        .fontSize(22)
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.text_primary'))
         .width('100%')
-        .padding({ left: 16, right: 16, top: 14 })
-      }
+        .textAlign(TextAlign.Start)
+
+      Text('Bàn phím tiếng Việt hỗ trợ Telex và VNI. Bạn có thể chỉnh kiểu gõ và độ cao bàn phím trong phần Cài đặt.')
+        .fontSize(13)
+        .fontColor($r('app.color.text_secondary'))
+        .lineHeight(18)
+        .width('100%')
+        .textAlign(TextAlign.Start)
+
+      Blank().height(4)
+
+      this.MenuItem(
+        'Cài đặt',
+        'Chọn kiểu gõ (Telex/VNI), điều chỉnh độ cao bàn phím và các tuỳ chọn khác.',
+        'pages/Settings'
+      )
+
+      this.MenuItem(
+        'Chính sách quyền riêng tư',
+        'Xem nội dung privacy policy để submit lên AppGallery.',
+        'pages/Privacy'
+      )
+
+      this.MenuItem(
+        'Giới thiệu',
+        'Thông tin phiên bản và liên hệ.',
+        'pages/About'
+      )
+
+      Blank().height(16)
     }
     .width('100%')
     .height('100%')
+    .padding(16)
     .backgroundColor($r('app.color.page_bg'))
   }
 }

@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "C:\\Users\\HUAWEI\\.ohos\\config\\default_VnTelexKeyboard_mEJb6ScDnzFu9yXFu-BA42dVxihuV_1MiB1q-1oh7Nc=.cer",
+          "certpath": "C:\\Users\\quoca\\.ohos\\config\\default_vntelexkeyboardforharmony_kR9nnPhyTEnzbQyXnafS6NKiwxeQEupqIRwFPQHzl0Y=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001B25B757FD0F7D13C2EAF92F01F0292DA4617AE697FCAD1189CB054267F5300C3D1D518ABBE242BD",
-          "profile": "C:\\Users\\HUAWEI\\.ohos\\config\\default_VnTelexKeyboard_mEJb6ScDnzFu9yXFu-BA42dVxihuV_1MiB1q-1oh7Nc=.p7b",
+          "keyPassword": "0000001B707FD8CB836DBB29DEF2443FA2F4F17E17C1E34B37B3CEDCBB72016F1C8415DD7515DFAA5B0429",
+          "profile": "C:\\Users\\quoca\\.ohos\\config\\default_vntelexkeyboardforharmony_kR9nnPhyTEnzbQyXnafS6NKiwxeQEupqIRwFPQHzl0Y=.p7b",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "C:\\Users\\HUAWEI\\.ohos\\config\\default_VnTelexKeyboard_mEJb6ScDnzFu9yXFu-BA42dVxihuV_1MiB1q-1oh7Nc=.p12",
-          "storePassword": "0000001BF8FE5846B17C0AD6636465773D3AB0EC1707870C75875CC37F22D781A04712B16FB5F628236279"
+          "storeFile": "C:\\Users\\quoca\\.ohos\\config\\default_vntelexkeyboardforharmony_kR9nnPhyTEnzbQyXnafS6NKiwxeQEupqIRwFPQHzl0Y=.p12",
+          "storePassword": "0000001B90669889E849F4D8CCE604D54B99CF353E162CC56F52C32C58A562AE0C72F01C30DD2344659EE0"
         }
       }
     ],
