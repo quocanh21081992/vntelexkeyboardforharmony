@@ -679,41 +679,59 @@ struct Index {
   }
 
   @Builder
-  private KeyView(k: KeyData, rowH: number) {
+  private KeyView(k: KeyData, rowH: number, padTop: number, padBottom: number) {
     if (k.kind === KeyKind.Spacer) {
-      Blank()
-        .height(rowH)
-        .margin({ left: this.s.gapX / 2, right: this.s.gapX / 2 })
-        .layoutWeight(k.weight);
+      // Spacer should also occupy a full "hit cell" so there is no dead zone.
+      // We keep visual spacing via padding (not margin) so touches never fall into gaps.
+      Stack() {}
+      .height(rowH)
+      .layoutWeight(k.weight)
+      .padding({
+        left: this.s.gapX / 2,
+        right: this.s.gapX / 2,
+        top: padTop,
+        bottom: padBottom
+      });
     } else {
+      // Outer container = hit area (no margin), inner = visual key (with padding gap).
       Stack() {
-        if (k.kind === KeyKind.Space) {
-          Row() {
-            Blank();
-            Stack()
-              .height(4)
-              .width('55%')
-              .borderRadius(999)
-              .backgroundColor(this.s.spaceHint)
-              .opacity(this.s.spaceHintAlpha);
-            Blank();
+        Stack() {
+          if (k.kind === KeyKind.Space) {
+            Row() {
+              Blank();
+              Stack()
+                .height(4)
+                .width('55%')
+                .borderRadius(999)
+                .backgroundColor(this.s.spaceHint)
+                .opacity(this.s.spaceHintAlpha);
+              Blank();
+            }
+            .width('100%')
+            .height('100%')
+            .alignItems(VerticalAlign.Center)
+            .justifyContent(FlexAlign.Center);
+          } else {
+            Text(this.labelOf(k))
+              .fontSize(this.s.textSize)
+              .fontColor(this.s.textColor)
+              .fontWeight(this.isFn(k) ? FontWeight.Medium : FontWeight.Regular);
           }
-          .width('100%')
-          .height('100%')
-          .alignItems(VerticalAlign.Center)
-          .justifyContent(FlexAlign.Center);
-        } else {
-          Text(this.labelOf(k))
-            .fontSize(this.s.textSize)
-            .fontColor(this.s.textColor)
-            .fontWeight(this.isFn(k) ? FontWeight.Medium : FontWeight.Regular);
         }
+        .width('100%')
+        .height('100%')
+        .borderRadius(this.s.radius)
+        .backgroundColor(this.bgColorOf(k));
       }
       .height(rowH)
-      .margin({ left: this.s.gapX / 2, right: this.s.gapX / 2 })
-      .borderRadius(this.s.radius)
-      .backgroundColor(this.bgColorOf(k))
       .layoutWeight(k.weight)
+      // Visual gap is created via padding INSIDE the hit area.
+      .padding({
+        left: this.s.gapX / 2,
+        right: this.s.gapX / 2,
+        top: padTop,
+        bottom: padBottom
+      })
       .onAreaChange((_: Area, area: Area) => {
         const a: KeyArea = new KeyArea();
         a.gx = this.lenToNumber(area.globalPosition?.x);
@@ -767,6 +785,22 @@ struct Index {
   }
 
 
+
+  private rowCellHeight(ri: number, rowsCount: number): number {
+    const visualH: number = this.rowHeightForIndex(ri, rowsCount);
+    // Add gapY as extra hit height on every row except the last to preserve overall height.
+    return visualH + (ri < rowsCount - 1 ? this.s.gapY : 0);
+  }
+
+  private rowPadTop(ri: number): number {
+    // Split vertical gap across rows so there is no dead zone between them.
+    return ri === 0 ? 0 : this.s.gapY / 2;
+  }
+
+  private rowPadBottom(ri: number, rowsCount: number): number {
+    return ri < rowsCount - 1 ? this.s.gapY / 2 : 0;
+  }
+
   @Builder
   private PreviewBar() {
     Row() {
@@ -814,7 +848,11 @@ struct Index {
             ForEach(
               row,
               (k: KeyData) => {
-                this.KeyView(k, this.rowHeightForIndex(ri, this.currentRowCount()));
+                this.KeyView(k,
+                  this.rowCellHeight(ri, this.currentRowCount()),
+                  this.rowPadTop(ri),
+                  this.rowPadBottom(ri, this.currentRowCount())
+                );
               },
               (k: KeyData) => {
                 // Make keys stable across toggles to avoid row-reuse glitches.
@@ -824,8 +862,10 @@ struct Index {
             );
           }
           .width('100%')
-          .height(this.rowHeightForIndex(ri, this.currentRowCount()))
-          .margin({ top: ri === 0 ? 0 : this.effectiveGapY(this.currentRowCount()) });
+          .height(this.rowCellHeight(ri, this.currentRowCount()))
+          // IMPORTANT: don't use margin between rows; it creates dead touch zones.
+          // Row spacing is now represented by each key's vertical padding (gapY/2).
+          ;
         },
         (_row: Array<KeyData>, i: number) => {
           if (this.isLayout123) return (this.isLayoutMore ? 'm' : 's') + '_m' + String(i);

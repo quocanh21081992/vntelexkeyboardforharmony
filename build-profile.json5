@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "storeFile": "C:/Cerf/Vietnam Keyboard.p12",
-          "storePassword": "0000001D6847C8C923DBDB7B197FB1B51E3E53AF2F9665E894ADB135665388B0373DD381AB61BB77C7221D0F14",
-          "keyAlias": "release",
-          "keyPassword": "0000001D991655024EA77CF967466501C671B52E6147A64F522D23268DB5366C9CC6AF370EA6AD50DFBF3276E5",
+          "certpath": "C:\\Users\\HUAWEI\\.ohos\\config\\default_VnTelexKeyboard_mEJb6ScDnzFu9yXFu-BA42dVxihuV_1MiB1q-1oh7Nc=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001A666885AEB046116BEF86C90BFA9C54CD7233E5CFE07075AF87A0059363CD9FA0D1F1945067FB",
+          "profile": "C:\\Users\\HUAWEI\\.ohos\\config\\default_VnTelexKeyboard_mEJb6ScDnzFu9yXFu-BA42dVxihuV_1MiB1q-1oh7Nc=.p7b",
           "signAlg": "SHA256withECDSA",
-          "profile": "C:/Cerf/Vietnam KeyboardRelease.p7b",
-          "certpath": "C:/Cerf/Vietnam Keyboard.cer"
+          "storeFile": "C:\\Users\\HUAWEI\\.ohos\\config\\default_VnTelexKeyboard_mEJb6ScDnzFu9yXFu-BA42dVxihuV_1MiB1q-1oh7Nc=.p12",
+          "storePassword": "0000001A39594777AC32D88F723D73D088B03A7E929EE6A8214A59F205880E754B8851F6A24BAF78BFA5"
         }
       }
     ],
